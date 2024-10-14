@@ -1,0 +1,286 @@
+import { NewPresenter } from './new-presenter';
+import Map from '../../utils/map';
+import { getBase64, getPosition } from '../../utils';
+import Camera from '../../utils/camera';
+
+export default class NewPage {
+  _map = null;
+  _form = null;
+  _isCameraOpen = false;
+  _takenPictures = [];
+
+  render() {
+    return `
+      <section class="new-report__container">
+        <div class="new-report__hero">
+          <h2 class="new-report__title">Buat Laporan Baru</h2>
+          <p class="new-report__description">
+            Silakan lengkapi formulir di bawah untuk membuat laporan baru.<br>
+            Pastikan laporan yang dibuat adalah valid.
+          </p>
+        </div>
+      </section>
+  
+      <section class="new-form__container">
+        <div class="container">
+          <form id="new-form" class="new-form">
+            <div class="form-control">
+              <label for="new-form-title-input" class="new-form__title-title">Judul Laporan</label>
+
+              <div class="new-form__title-container">
+                <input id="new-form-title-input" type="text" name="title" placeholder="Masukkan judul laporan" aria-describedby="title-input-more-info">
+              </div>
+              <div id="title-input-more-info">Pastikan judul laporan dibuat dengan jelas dan deskriptif dalam 1 kalimat.</div>
+            </div>
+            <div class="form-control">
+              <div class="new-form__damage-level-title">Tingkat Kerusakan</div>
+
+              <div class="new-form__damage-level-container">
+                <div class="new-form-damage-level-minor-container">
+                  <input id="new-form-damage-level-minor-input" type="radio" name="damageLevel" value="minor">
+                  <label for="new-form-damage-level-minor-input">Rendah <span title="Contoh: Lubang kecil di jalan, kerusakan ringan pada tanda lalu lintas, dll.">&quest;</span></label>
+                </div>
+                <div class="new-form-damage-level-moderate-container">
+                  <input id="new-form-damage-level-moderate-input" type="radio" name="damageLevel" value="moderate">
+                  <label for="new-form-damage-level-moderate-input">Sedang <span title="Contoh: Lubang kecil di jalan, kerusakan ringan pada tanda lalu lintas, dll.">&quest;</span></label>
+                </div>
+                <div class="new-form-damage-level-severe-container">
+                  <input id="new-form-damage-level-severe-input" type="radio" name="damageLevel" value="severe">
+                  <label for="new-form-damage-level-severe-input">Berat <span title="Contoh: Lubang kecil di jalan, kerusakan ringan pada tanda lalu lintas, dll.">&quest;</span></label>
+                </div>
+              </div>
+            </div>
+            <div class="form-control">
+              <label for="new-form-description-input" class="new-form__description-title">Keterangan</label>
+
+              <div class="new-form__description-container">
+                <textarea id="new-form-description-input" name="description" placeholder="Masukkan keterangan lengkap laporan. Anda dapat menjelaskan apa kejadiannya, dimana, kapan, dll." aria-describedby="title-more-info"></textarea>
+              </div>
+            </div>
+            <div class="form-control">
+              <div class="new-form__documentations-title">Dokumentasi</div>
+              <div id="documentations-more-info">Anda dapat menyertakan foto atau video sebagai dokumentasi.</div>
+
+              <div class="new-form__documentations-container">
+                <div class="new-form__documentations__buttons">
+                  <label tabindex="0" class="btn btn-outline" for="new-form-documentations-input">Ambil Gambar</label>
+                  <input id="new-form-documentations-input" class="new-form__documentations__input" name="documentations" type="file" accept="image/*" multiple aria-multiline="true" aria-describedby="documentations-more-info">
+                  <button type="button" id="new-form-documentations-camera" class="btn btn-outline">Buka Kamera</button>
+                </div>
+                <div id="new-form-camera-container" class="new-form__camera-container">
+                  <video id="new-form-camera-video" class="new-form__camera__video">Video stream not available.</video>
+                  <canvas id="new-form-camera-canvas" class="new-form__camera__canvas"></canvas>
+                  <div class="new-form__camera__tools">
+                    <select id="new-form-camera-list"></select>
+                    <button type="button" id="new-form-camera-take" class="btn">Ambil Gambar</button>
+                  </div>
+                </div>
+                <ul id="new-form-documentations-outputs" class="new-form__documentations__outputs"></ul>
+              </div>
+            </div>
+            <div class="form-control">
+              <div class="new-form__location-title">Lokasi</div>
+
+              <div class="new-form__location-container">
+                <div id="new-form-map-location" class="new-form__location"></div>
+                <div class="new-form__location__lat-lng">
+                  <input type="text" name="latitude" disabled>
+                  <input type="text" name="longitude" disabled>
+                </div>
+              </div>
+            </div>
+            <div class="form-buttons">
+              <button class="btn" type="submit">Buat Laporan</button>
+              <a class="btn" href="#/">Batal</a>
+            </div>
+          </form>
+        </div>
+      </section>
+    `;
+  }
+
+  async afterRender() {
+    this._form = document.getElementById('new-form');
+
+    const presenter = new NewPresenter(this);
+
+    this._setupMap();
+    await this._setupNewForm();
+  }
+
+  async _setupNewForm() {
+    const title = this._form.elements.namedItem('title');
+    const damageLevel = this._form.elements.namedItem('damageLevel');
+    const description = this._form.elements.namedItem('description');
+    const latitude = this._form.elements.namedItem('latitude');
+    const longitude = this._form.elements.namedItem('longitude');
+
+    this._form.addEventListener('submit', (event) => {
+      event.preventDefault();
+
+      const evidenceImages = this._takenPictures.map((picture) => picture.imageUrl);
+      const body = {
+        title: title.value,
+        damageLevel: damageLevel.value,
+        description: description.value,
+        evidenceImages: evidenceImages,
+        location: {
+          latitude: latitude.value,
+          longitude: longitude.value,
+        },
+      };
+
+      window.alert(JSON.stringify(body));
+    });
+
+    const documentations = this._form.elements.namedItem('documentations');
+    documentations.addEventListener('change', async (event) => {
+      const insertingPicturesPromises = Object.values(event.srcElement.files).map(async (file) => {
+        await this._addTakenPicture(file);
+      });
+      await Promise.all(insertingPicturesPromises);
+
+      await this._populateTakenPictures();
+    });
+
+    const cameraContainer = document.getElementById('new-form-camera-container');
+    document
+      .getElementById('new-form-documentations-camera')
+      .addEventListener('click', async (event) => {
+        if (Camera.isMediaDevicesAvailable()) {
+          cameraContainer.classList.toggle('open');
+          this._isCameraOpen = !this._isCameraOpen;
+
+          if (this._isCameraOpen) {
+            this._setupCamera();
+            event.currentTarget.textContent = 'Tutup Kamera';
+          } else {
+            this._camera?.stop();
+            event.currentTarget.textContent = 'Buka Kamera';
+          }
+        }
+      });
+  }
+
+  async _setupMap() {
+    const position = await getPosition();
+    const coordinate = [position.coords.latitude, position.coords.longitude];
+
+    this._map = await Map.build('#new-form-map-location', coordinate, {
+      zoom: 15,
+    });
+
+    const draggableMarker = this._map.addMarker(coordinate, {
+      draggable: 'true',
+    });
+
+    this._updateLatLng(coordinate[0], coordinate[1]);
+
+    this._map.addMarkerEventListener(draggableMarker, 'dragend', (event) => {
+      const coordinate = event.target.getLatLng();
+      this._updateLatLng(coordinate.lat, coordinate.lng);
+    });
+
+    this._map.addMapEventListener('click', (event) => {
+      draggableMarker.setLatLng(event.latlng);
+      this._updateLatLng(event.latlng.lat, event.latlng.lng);
+    });
+  }
+
+  _setupCamera() {
+    const cameraContainer = document.getElementById('new-form-camera-container');
+    const video = document.getElementById('new-form-camera-video');
+    const cameraList = document.getElementById('new-form-camera-list');
+    const canvas = document.getElementById('new-form-camera-canvas');
+
+    this._camera = new Camera({
+      cameraContainer,
+      cameraList,
+      video,
+      canvas,
+    });
+
+    this._camera.launch();
+
+    this._camera.addCheeseButtonListener('#new-form-camera-take', async () => {
+      const imageUrl = this._camera.takePicture();
+      await this._addTakenPicture(imageUrl);
+      await this._populateTakenPictures();
+    });
+  }
+
+  async _addTakenPicture(imageUrl) {
+    let base64 = imageUrl;
+
+    if (imageUrl instanceof File) {
+      base64 = await getBase64(imageUrl);
+    }
+
+    this._takenPictures = [...this._takenPictures, {
+      id: new Date().getTime(),
+      imageUrl: base64,
+    }];
+  }
+
+  async _populateTakenPictures() {
+    const outputs = document.getElementById('new-form-documentations-outputs');
+
+    const listOfPictures = this._takenPictures.map((picture, index) => {
+      return `
+        <li class="new-form__documentations__outputs-item">
+          <button type="button" data-deletepictureid="${picture.id}" class="new-form__documentations__outputs-item__delete-btn">
+            <img src="${picture.imageUrl}" alt="">
+          </button>
+        </li>
+      `;
+    });
+
+    outputs.innerHTML = listOfPictures.join('');
+
+    document
+      .querySelectorAll('button[data-deletepictureid]')
+      .forEach((button) => button.addEventListener('click', (event) => {
+        const pictureId = event.currentTarget.dataset.deletepictureid;
+        const deleted = this._removePicture(pictureId);
+        if (!deleted) {
+          console.log(`Picture with id ${pictureId} was not found`);
+        }
+
+        // Updating taken pictures
+        this._populateTakenPictures();
+      }));
+  }
+
+  _removePicture(id) {
+    const selectedPicture = this._takenPictures.find((picture) => {
+      return picture.id == id;
+    });
+
+    // Check if founded selectedPicture is available
+    if (!selectedPicture) {
+      return null;
+    }
+
+    // Deleting selected selectedPicture from takenPictures
+    this._takenPictures = this._takenPictures.filter((picture) => {
+      return picture.id !== selectedPicture.id;
+    });
+
+    return selectedPicture;
+  }
+
+  _updateLatLng(latitude, longitude) {
+    this._form.elements.namedItem('latitude').value = latitude;
+    this._form.elements.namedItem('longitude').value = longitude;
+  }
+
+  showLoading(selector) {
+    const musicsLoader = document.getElementById(selector);
+    musicsLoader.style.display = 'block';
+  }
+
+  hideLoading(selector) {
+    const musicsLoader = document.getElementById(selector);
+    musicsLoader.style.display = 'none';
+  }
+}
