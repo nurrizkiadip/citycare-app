@@ -6,15 +6,16 @@ class HomePresenter {
   }
 
   async getReports() {
-    this._view.showLoading();
+    this._view.showLoading('#loader');
     try {
       const response = await getAllReports();
 
-      this._view.populateReports(response.data);
+      this._view.populateReportsList(response.data);
     } catch (error) {
       console.error('Something went error:', error);
+      this._view.populateReportsListError();
     } finally {
-      this._view.hideLoading();
+      this._view.hideLoading('#loader');
     }
   }
 }

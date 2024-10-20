@@ -1,65 +1,132 @@
-import { parseAndCombineActiveUrl } from '../routes/url-parser';
+import { parseActiveUrl, parseAndCombineActiveUrl, parseAndCombineUrl, parseUrl } from '../routes/url-parser';
+import {
+  generateAuthenticatedNavigationList,
+  generateMainNavigationList,
+  generateUnauthenticatedNavigationList
+} from '../../templates';
+import { getAccessToken, getLogout } from '../utils/auth';
+import { transitionHelper } from '../utils';
 import routes from '../routes/routes';
+import feather from 'feather-icons';
 
 class App {
+  _currentPath = null;
+
   constructor({ drawerNavigation, drawerButton, content }) {
+    this._currentPath = window.location.hash.slice(1).toLowerCase();
     this._content = content;
     this._drawerButton = drawerButton;
     this._drawerNavigation = drawerNavigation;
 
-    this.setupDrawer();
+    this._setupDrawer();
   }
 
-  async setupDrawer() {
-    try {
-      const navListResponse = await fetch('/templates/navbar.html');
-      const navListText = await navListResponse.text();
+  _setupDrawer() {
+    this._drawerButton.addEventListener('click', () => {
+      this._drawerNavigation.classList.toggle('open');
+    });
 
-      this._drawerNavigation.innerHTML = navListText;
-    } catch (error) {
-      console.log('Error:', error);
-    } finally {
-      this._drawerButton.addEventListener('click', () => {
-        this._drawerNavigation.classList.toggle('open');
-      });
+    document.body.addEventListener('click', (event) => {
+      if (!this._drawerNavigation.contains(event.target) && !this._drawerButton.contains(event.target)) {
+        this._drawerNavigation.classList.remove('open');
+      }
+    });
+  }
 
-      document.body.addEventListener('click', (event) => {
-        if (!this._drawerNavigation.contains(event.target) && !this._drawerButton.contains(event.target)) {
-          this._drawerNavigation.classList.remove('open');
-        }
-      });
+  _setupNavigationList() {
+    const isLogin = !!getAccessToken();
+    const navListMain = this._drawerNavigation.children['navlist-main'];
+    const navList = this._drawerNavigation.children['navlist'];
+
+    if (!isLogin) {
+      navListMain.innerHTML = '';
+      navList.innerHTML = generateUnauthenticatedNavigationList();
+      return;
     }
+
+    navListMain.innerHTML = generateMainNavigationList();
+    navList.innerHTML = generateAuthenticatedNavigationList();
+
+    const logoutButton = document.querySelector('#logout-button');
+    logoutButton.addEventListener('click', (event) => {
+      event.preventDefault();
+
+      getLogout();
+
+      window.location.hash = '/login';
+    });
   }
 
   async renderPage() {
     const url = parseAndCombineActiveUrl();
-    let page = routes[url] ?? null;
+    const route = routes[url] ?? null;
 
-    if (!page) {
+    // Check if route available
+    if (!route) {
       window.location.hash = '/404';
-      page = routes['/404'];
-    }
-
-    if (!document.startViewTransition) {
-      this._content.innerHTML = page.render();
-      await page.afterRender();
       return;
     }
 
-    const transition = document.startViewTransition(async () => {
-      this._content.innerHTML = page.render();
-      await page.afterRender();
-    });
+    // Get page instance
+    const page = route();
+    if (page) {
+      const navigationType = this._getNavigationType();
+      let targetThumbnail = null;
 
-    transition.ready.then(() => {
-      console.log('ready');
-    });
-    transition.finished.then(() => {
-      console.log('finished');
-    });
-    transition.updateCallbackDone.then(() => {
-      console.log('updateCallbackDone');
-    });
+      if (navigationType === 'list-to-detail') {
+        const extractUrl = parseActiveUrl();
+        targetThumbnail = document.querySelector(`[data-reportid="${extractUrl.id}"]`);
+        if (targetThumbnail) {
+          targetThumbnail.querySelector('img').style.viewTransitionName = 'report-img';
+        }
+      }
+
+      const transition = transitionHelper({
+        updateDOM: async () => {
+          this._content.innerHTML = page.render();
+          await page.afterRender();
+
+          if (navigationType === 'detail-to-list') {
+            const extractUrl = parseUrl(this._currentPath);
+            targetThumbnail = document.querySelector(`[data-reportid="${extractUrl.id}"]`);
+            if (targetThumbnail) {
+              targetThumbnail.querySelector('img').style.viewTransitionName = 'report-img';
+            }
+          }
+        },
+      });
+
+      transition.updateCallbackDone.then(() => {
+        this._setupNavigationList();
+        feather.replace();
+      });
+      transition.finished.then(() => {
+        // Clear the temporary tag
+        if (targetThumbnail) {
+          targetThumbnail.style.viewTransitionName = '';
+        }
+
+        this._currentPath = window.location.hash.slice(1).toLowerCase();
+      });
+    }
+  }
+
+  _getNavigationType() {
+    const fromPath = parseAndCombineUrl(this._currentPath);
+    const toPath = parseAndCombineActiveUrl();
+
+    const reportListPath = ['/', '/bookmark'];
+    const reportDetailPath = ['/reports/:id'];
+
+    if (reportListPath.includes(fromPath) && reportDetailPath.includes(toPath)) {
+      return 'list-to-detail';
+    }
+
+    if (reportDetailPath.includes(fromPath) && reportListPath.includes(toPath)) {
+      return 'detail-to-list';
+    }
+
+    return null;
   }
 }
 

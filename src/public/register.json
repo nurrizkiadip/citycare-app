@@ -1,0 +1,9 @@
+{
+  "message": "Success to create a new user",
+  "data": {
+    "id": "user-nbnylvJ4BWyGTpDm",
+    "name": "John Doe",
+    "email": "johndoe@gmail.com",
+    "photoUrl": "https://ui-avatars.com/api/?name=John Doe&background=random"
+  }
+}

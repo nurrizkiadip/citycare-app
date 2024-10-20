@@ -3,7 +3,7 @@
   "data": [
     {
       "id": "report-anfksajdbkjan",
-      "damageLevel": "critical",
+      "damageLevel": "severe",
       "title": "Halte Bis sudah berkarat",
       "description": "Terjadi karatan pada bangku halte bis",
       "evidenceImages": [
@@ -25,7 +25,7 @@
     },
     {
       "id": "report-jiadsnkjanvk",
-      "damageLevel": "significant",
+      "damageLevel": "moderate",
       "title": "Stasiun Bandung",
       "description": "Stasiun Bandung Stasiun Bandung Stasiun Bandung",
       "evidenceImages": [
@@ -47,7 +47,7 @@
     },
     {
       "id": "report-aslkdfh98q3ihnkjn",
-      "damageLevel": "minimal",
+      "damageLevel": "minor",
       "title": "Lampu Merah kurang banyak",
       "description": "Lampu Merah kurang banyak Lampu Merah kurang banyak Lampu Merah kurang banyak",
       "evidenceImages": [
@@ -69,7 +69,7 @@
     },
     {
       "id": "report-aslkdfh98q3ihnkjn",
-      "damageLevel": "critical",
+      "damageLevel": "severe",
       "title": "Halte Bis sudah berkarat",
       "description": "Terjadi karatan pada bangku halte bis",
       "evidenceImages": [

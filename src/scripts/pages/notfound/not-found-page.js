@@ -1,5 +1,5 @@
 export default class NotFoundPage {
-  async render() {
+  render() {
     return `
       <section>
         <div class="container">

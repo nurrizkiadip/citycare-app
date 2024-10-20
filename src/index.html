@@ -12,35 +12,40 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
       rel="stylesheet"
     />
   </head>
   <body>
     <header>
-      <div class="container" role="banner">
-        <div class="header-content">
-          <a class="header-content__brand-name" href="/">CityCare App</a>
+      <button id="skip-link" class="skip-link">Langsung ke konten utama</button>
+      <div class="main-header container" role="banner">
+        <a class="brand-name__link" href="#/">
+          <img class="brand-name__link__image" src="logo.png" alt="CityCare Logo">
+          <span class="brand-name__link__text">CityCare App</span>
+        </a>
 
-          <nav>
-            <ul id="navlist" class="header-content__nav-list"></ul>
-          </nav>
+        <nav id="navigation-drawer" class="navigation-drawer">
+          <ul id="navlist-main" class="navigation-drawer__navlist-main"></ul>
+          <ul id="navlist" class="navigation-drawer__navlist"></ul>
+        </nav>
 
-          <button id="drawerbutton" class="header-content__drawer-button">☰</button>
-        </div>
+        <button id="drawer-button" class="drawer-button">☰</button>
       </div>
     </header>
 
-    <main>
-      <div id="maincontent" class="main-content" role="main"></div>
+    <main tabIndex="-1" id="maincontent" class="main-content">
     </main>
 
     <footer>
       <div class="container">
         <hr>
-        <div id="footercontent" class="footer-content" role="contentinfo">
-          <a class="brand-name" href="/">CityCare App</a>
-          <p class="copyright">&copy; 2024 Dicoding. All rights reserved</p>
+        <div id="footercontent" class="main-footer" role="contentinfo">
+          <a class="brand-name__link" href="#/">
+            <img class="brand-name__link__image" src="logo.png" alt="CityCare Logo">
+            <span class="brand-name__link__text">CityCare App</span>
+          </a>
+          <p class="copyright">&copy; 2025 Dicoding. All rights reserved.</p>
         </div>
       </div>
     </footer>

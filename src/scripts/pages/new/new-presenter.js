@@ -1,32 +1,29 @@
-import {getAllCommentsByReportId, getMyUserInfo, getReportById} from '../../data/api';
+import { storeNewReport } from '../../data/api';
 
 class NewPresenter {
   constructor(view) {
     this._view = view;
   }
 
-  async getReportDetail(id) {
-    this._view.showLoading('reportdetailloader');
+  async postNewReport({ title, damageLevel, description, evidenceImages, latitude, longitude }) {
+    this._view.showLoading('#new-report-loader');
     try {
-      const reportResponse = await getReportById(id);
-      const userInfoResponse = await getMyUserInfo();
-      this._view.populateReportDetail(reportResponse.data, userInfoResponse.data);
-    } catch (error) {
-      console.error('Something went error:', error);
-    } finally {
-      this._view.hideLoading('reportdetailloader');
-    }
-  }
+      const response = await storeNewReport({
+        title: title.value,
+        damageLevel: damageLevel.value,
+        description: description.value,
+        evidenceImages: evidenceImages,
+        location: {
+          latitude: latitude.value,
+          longitude: longitude.value,
+        },
+      });
 
-  async getReportDetailComments(reportId) {
-    this._view.showLoading('commentslistloader');
-    try {
-      const response = await getAllCommentsByReportId(reportId);
-      this._view.populateReportDetailComments(response.data);
+      this._view.storeSuccessfully(response);
     } catch (error) {
       console.error('Something went error:', error);
     } finally {
-      this._view.hideLoading('commentslistloader');
+      this._view.hideLoading('#new-report-loader');
     }
   }
 }

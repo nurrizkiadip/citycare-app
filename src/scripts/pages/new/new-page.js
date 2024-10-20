@@ -1,17 +1,19 @@
 import { NewPresenter } from './new-presenter';
-import Map from '../../utils/map';
-import { getBase64, getPosition } from '../../utils';
+import Leaflet from '../../utils/leaflet';
 import Camera from '../../utils/camera';
+import { getBase64, getCurrentPosition } from '../../utils';
 
 export default class NewPage {
-  _map = null;
+  _presenter = null;
   _form = null;
+  _map = null;
+
   _isCameraOpen = false;
   _takenPictures = [];
 
   render() {
     return `
-      <section class="new-report__container">
+      <section>
         <div class="new-report__hero">
           <h2 class="new-report__title">Buat Laporan Baru</h2>
           <p class="new-report__description">
@@ -21,8 +23,8 @@ export default class NewPage {
         </div>
       </section>
   
-      <section class="new-form__container">
-        <div class="container">
+      <section>
+        <div class="new-form__container container">
           <form id="new-form" class="new-form">
             <div class="form-control">
               <label for="new-form-title-input" class="new-form__title-title">Judul Laporan</label>
@@ -38,15 +40,21 @@ export default class NewPage {
               <div class="new-form__damage-level-container">
                 <div class="new-form-damage-level-minor-container">
                   <input id="new-form-damage-level-minor-input" type="radio" name="damageLevel" value="minor">
-                  <label for="new-form-damage-level-minor-input">Rendah <span title="Contoh: Lubang kecil di jalan, kerusakan ringan pada tanda lalu lintas, dll.">&quest;</span></label>
+                  <label for="new-form-damage-level-minor-input">
+                    Rendah <span title="Contoh: Lubang kecil di jalan, kerusakan ringan pada tanda lalu lintas, dll."><i data-feather="help-circle"></i></span>
+                  </label>
                 </div>
                 <div class="new-form-damage-level-moderate-container">
                   <input id="new-form-damage-level-moderate-input" type="radio" name="damageLevel" value="moderate">
-                  <label for="new-form-damage-level-moderate-input">Sedang <span title="Contoh: Lubang kecil di jalan, kerusakan ringan pada tanda lalu lintas, dll.">&quest;</span></label>
+                  <label for="new-form-damage-level-moderate-input">
+                    Sedang <span title="Contoh: Jalan retak besar, trotoar amblas, lampu jalan mati, dll."><i data-feather="help-circle"></i></span>
+                  </label>
                 </div>
                 <div class="new-form-damage-level-severe-container">
                   <input id="new-form-damage-level-severe-input" type="radio" name="damageLevel" value="severe">
-                  <label for="new-form-damage-level-severe-input">Berat <span title="Contoh: Lubang kecil di jalan, kerusakan ringan pada tanda lalu lintas, dll.">&quest;</span></label>
+                  <label for="new-form-damage-level-severe-input">
+                    Berat <span title="Contoh: Jembatan ambruk, tiang listrik roboh, longsor yang menutup jalan, dll."><i data-feather="help-circle"></i></span>
+                  </label>
                 </div>
               </div>
             </div>
@@ -91,8 +99,9 @@ export default class NewPage {
             </div>
             <div class="form-buttons">
               <button class="btn" type="submit">Buat Laporan</button>
-              <a class="btn" href="#/">Batal</a>
+              <a class="btn btn-outline" href="#/">Batal</a>
             </div>
+            <div id="new-report-loader" class="loader"></div>
           </form>
         </div>
       </section>
@@ -100,11 +109,12 @@ export default class NewPage {
   }
 
   async afterRender() {
+    this.hideLoading('#new-report-loader');
+
     this._form = document.getElementById('new-form');
+    this._presenter = new NewPresenter(this);
 
-    const presenter = new NewPresenter(this);
-
-    this._setupMap();
+    await this._setupMap();
     await this._setupNewForm();
   }
 
@@ -115,22 +125,19 @@ export default class NewPage {
     const latitude = this._form.elements.namedItem('latitude');
     const longitude = this._form.elements.namedItem('longitude');
 
-    this._form.addEventListener('submit', (event) => {
+    this._form.addEventListener('submit', async (event) => {
       event.preventDefault();
 
       const evidenceImages = this._takenPictures.map((picture) => picture.imageUrl);
-      const body = {
+
+      await this._presenter.postNewReport({
         title: title.value,
         damageLevel: damageLevel.value,
         description: description.value,
         evidenceImages: evidenceImages,
-        location: {
-          latitude: latitude.value,
-          longitude: longitude.value,
-        },
-      };
-
-      window.alert(JSON.stringify(body));
+        latitude: latitude.value,
+        longitude: longitude.value,
+      });
     });
 
     const documentations = this._form.elements.namedItem('documentations');
@@ -163,18 +170,17 @@ export default class NewPage {
   }
 
   async _setupMap() {
-    const position = await getPosition();
-    const coordinate = [position.coords.latitude, position.coords.longitude];
-
-    this._map = await Map.build('#new-form-map-location', coordinate, {
+    this._map = await Leaflet.build('#new-form-map-location', {
       zoom: 15,
     });
 
-    const draggableMarker = this._map.addMarker(coordinate, {
+    const centerCoordinate = this._map.getCenter();
+
+    const draggableMarker = this._map.addMarker(centerCoordinate, {
       draggable: 'true',
     });
 
-    this._updateLatLng(coordinate[0], coordinate[1]);
+    this._updateLatLng(centerCoordinate.lat, centerCoordinate.lng);
 
     this._map.addMarkerEventListener(draggableMarker, 'dragend', (event) => {
       const coordinate = event.target.getLatLng();
@@ -274,13 +280,17 @@ export default class NewPage {
     this._form.elements.namedItem('longitude').value = longitude;
   }
 
+  storeSuccessfully() {
+    console.log('Success storing new report');
+  }
+
   showLoading(selector) {
-    const musicsLoader = document.getElementById(selector);
-    musicsLoader.style.display = 'block';
+    const loader = document.querySelector(selector);
+    loader.style.display = 'block';
   }
 
   hideLoading(selector) {
-    const musicsLoader = document.getElementById(selector);
-    musicsLoader.style.display = 'none';
+    const loader = document.querySelector(selector);
+    loader.style.display = 'none';
   }
 }

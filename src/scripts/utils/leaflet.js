@@ -1,18 +1,17 @@
-import {Icon, icon, map, Marker, marker, popup, tileLayer} from 'leaflet';
+import { Icon, icon, map, marker, popup, tileLayer } from 'leaflet';
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
-import { getPosition } from './index';
+import { getCurrentPosition } from './index';
 
-export default class Map {
+export default class Leaflet {
   _element = null;
   _map = null;
 
-  constructor(selector, center, options = {}) {
+  constructor(selector, options = {}) {
     this._element = document.querySelector(selector);
 
     this._map = map(this._element, {
-      center: center,
       zoom: 5,
       scrollWheelZoom: false,
       ...options,
@@ -25,15 +24,28 @@ export default class Map {
    * Reference of using static method build:
    * https://stackoverflow.com/questions/43431550/how-can-i-invoke-asynchronous-code-within-a-constructor
    * */
-  static async build(selector, center, options = {}) {
-    if (!center) {
-      const position = await getPosition();
-      const coordinate = [position.coords.latitude, position.coords.longitude];
-
-      return new Map(selector, coordinate, options);
+  static async build(selector, options = {}) {
+    if ('center' in options) {
+      return new Leaflet(selector, options);
     }
 
-    return new Map(selector, center, options);
+    try {
+      const position = await getCurrentPosition();
+      const coordinate = [position.coords.latitude, position.coords.longitude];
+
+      return new Leaflet(selector, {
+        ...options,
+        center: coordinate,
+      });
+    } catch (error) {
+      window.alert(error.message);
+      console.error(error.message);
+
+      return new Leaflet(selector, {
+        ...options,
+        center: [-6.200000, 106.816666],
+      });
+    }
   }
 
   addBaseLayer() {
@@ -43,11 +55,15 @@ export default class Map {
     baseLayer.addTo(this._map);
   }
 
-  changeCamera(coordinate, zoomLevel) {
+  changeCamera(coordinate, zoomLevel = undefined) {
     this._map.setView(coordinate, zoomLevel);
   }
 
-  createIcon(options) {
+  getCenter() {
+    return this._map.getCenter();
+  }
+
+  createIcon(options = {}) {
     return icon({
       ...Icon.Default.prototype.options,
       iconRetinaUrl: markerIcon2x,

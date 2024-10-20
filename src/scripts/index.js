@@ -1,11 +1,14 @@
-import 'leaflet/dist/leaflet.css';
 import '../styles/styles.css';
+import '../styles/responsives.css';
+import 'leaflet/dist/leaflet.css';
 
 import App from './pages/app';
+import { setupSkipToContent } from './utils';
 
+const skipLinkButton = document.querySelector('#skip-link');
 const content = document.querySelector('#maincontent');
-const drawerButton = document.querySelector('#drawerbutton');
-const drawerNavigation = document.querySelector('#navlist');
+const drawerButton = document.querySelector('#drawer-button');
+const drawerNavigation = document.querySelector('#navigation-drawer');
 
 const app = new App({
   content,
@@ -15,6 +18,8 @@ const app = new App({
 
 document.addEventListener('DOMContentLoaded', async () => {
   await app.renderPage();
+
+  setupSkipToContent(skipLinkButton, content);
 });
 
 window.addEventListener('hashchange', async () => {

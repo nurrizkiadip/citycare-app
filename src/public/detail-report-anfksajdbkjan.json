@@ -2,7 +2,7 @@
   "message": "Success to retrieve report with id report-anfksajdbkjan",
   "data": {
     "id": "report-anfksajdbkjan",
-      "damageLevel": "critical",
+      "damageLevel": "severe",
       "title": "Halte Bis sudah berkarat",
       "description": "Terjadi karatan pada bangku halte bis",
       "evidenceImages": [

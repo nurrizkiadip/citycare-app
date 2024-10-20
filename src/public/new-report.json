@@ -1,0 +1,25 @@
+{
+  "message": "Success to add new record",
+  "data": {
+    "id": "report-anfksajdbkjan",
+    "damageLevel": "severe",
+    "title": "Halte Bis sudah berkarat",
+    "description": "Terjadi karatan pada bangku halte bis",
+    "location": {
+      "latitude": -6.2088,
+      "longitude": 106.8456
+    },
+    "evidenceImages": [
+      "image1_url.jpg",
+      "image2_url.jpg"
+    ],
+    "userOwner": {
+      "id": "user-akdsjvniduvn",
+      "name": "John Doe",
+      "email": "johndoe@gmail.com",
+      "photoUrl": "https://ui-avatars.com/api/?name=John Doe&background=random"
+    },
+    "createdAt": "...",
+    "updatedAt": "..."
+  }
+}

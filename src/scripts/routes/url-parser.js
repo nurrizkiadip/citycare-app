@@ -1,5 +1,5 @@
-function extractUrlSegments(url) {
-  const splitUrl = url.split('/');
+function extractUrlSegments(path) {
+  const splitUrl = path.split('/');
 
   return {
     resource: splitUrl[1] || null,
@@ -7,14 +7,14 @@ function extractUrlSegments(url) {
   };
 }
 
-function combineUrlSegments(urlSegments) {
+function combineUrlSegments(pathSegments) {
   let url = '';
 
-  if (urlSegments.resource) {
-    url = url.concat(`/${urlSegments.resource}`);
+  if (pathSegments.resource) {
+    url = url.concat(`/${pathSegments.resource}`);
   }
 
-  if (urlSegments.id) {
+  if (pathSegments.id) {
     url = url.concat('/:id');
   }
 
@@ -22,12 +22,21 @@ function combineUrlSegments(urlSegments) {
 }
 
 export function parseAndCombineActiveUrl() {
-  const url = window.location.hash.slice(1).toLowerCase();
-  const urlSegments = extractUrlSegments(url);
+  const pathname = window.location.hash.slice(1).toLowerCase();
+  const urlSegments = extractUrlSegments(pathname);
   return combineUrlSegments(urlSegments);
 }
 
 export function parseActiveUrl() {
-  const url = window.location.hash.slice(1).toLowerCase();
-  return extractUrlSegments(url);
+  const pathname = window.location.hash.slice(1).toLowerCase();
+  return extractUrlSegments(pathname);
+}
+
+export function parseAndCombineUrl(pathname) {
+  const urlSegments = extractUrlSegments(pathname);
+  return combineUrlSegments(urlSegments);
+}
+
+export function parseUrl(pathname) {
+  return extractUrlSegments(pathname);
 }

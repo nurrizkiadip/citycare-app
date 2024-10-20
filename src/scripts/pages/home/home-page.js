@@ -1,65 +1,50 @@
 import { HomePresenter } from './home-presenter';
-import { showFormattedDate } from '../../utils';
-import Map from '../../utils/map';
+import Leaflet from '../../utils/leaflet';
+import { generateReportItemTemplate } from '../../../templates';
 
 export default class HomePage {
-  _reports = [];
-
   render() {
     return `
       <section class="map">
-        <div id="reportsmap" class="reports-map"></div>
+        <div id="reports-map" class="reports-map"></div>
       </section>
 
       <section class="report">
         <div class="container">
-          <h2 class="section-title">All Reports</h2>
+          <h2 class="section-title">Daftar Laporan Kerusakan</h2>
 
-          <div id="reportslist" class="reports-list"></div>
-          <div id="loader" class="text-center">
-            <span class="loader"></span>
-          </div>
+          <div id="reports-list" class="reports-list"></div>
+          <div id="reports-list-empty" class="reports-list__empty"></div>
+          <div id="reports-list-error" class="reports-list__error"></div>
+          <div id="loader" class="loader"></div>
         </div>
       </section>
     `;
   }
 
   async afterRender() {
-    // Setup map first before another
-    this._setupMap();
-
     const presenter = new HomePresenter(this);
 
+    // Setup map first before another
+    await this._setupMap();
     await presenter.getReports();
   }
 
-  populateReports(reports) {
-    this._reports = reports;
+  populateReportsList(reports) {
+    if (!Array.isArray(reports)) {
+      throw new Error('reports must be an array');
+    }
 
-    const elements = this._reports.map((report) => {
-      return `
-        <div class="report-item">
-          <img class="report-item__image" src="${report.evidenceImages[0]}" alt="${report.title}">
-          <div class="report-item__body">
-            <div class="report-item__body-header">
-              <h2 id="reporttitle" class="report-item__body-header__title">${report.title}</h2>
-              <div class="report-item__header__more-info">
-                <div class="report-item__createdAt">${showFormattedDate(report.createdAt, 'id-ID')}</div>
-                <div class="report-item__location">${'Bandung'}</div>
-              </div>
-            </div>
-            <div id="reportdescription" class="report-item__body__description">${report.description}</div>
-            <a class="report-item__body__read-more" href="#/reports/${report.id}">Selengkapnya</a>
-          </div>
-        </div>
-      `;
-    });
+    if (reports.length <= 0) {
+      const reportsListEmpty = document.getElementById('reports-list-empty');
+      reportsListEmpty.innerHTML = 'Daftar laporan sedang kosong, nih.';
+      reportsListEmpty.style.display = 'block';
 
-    const musicListContainer = document.getElementById('reportslist');
-    musicListContainer.innerHTML = elements.join('');
+      return;
+    }
 
-    if (this._map) {
-      this._reports.forEach((report) => {
+    const elements = reports.map((report) => {
+      if (this._map) {
         const coordinate = [report.location.latitude, report.location.longitude];
         const markerOptions = {
           alt: report.title,
@@ -68,21 +53,41 @@ export default class HomePage {
           content: report.title,
         };
         this._map.addMarker(coordinate, markerOptions, popupOptions);
-      });
-    }
+      }
+
+      return generateReportItemTemplate(report);
+    });
+
+    const reportsList = document.getElementById('reports-list');
+    reportsList.innerHTML = elements.join('');
+    reportsList.style.display = 'grid';
+
+    document
+      .querySelectorAll('button[data-savereportid]')
+      .forEach((button) => button.addEventListener('click', (event) => {
+        window.alert('Fitur simpan laporan akan hadir segera!')
+      }));
+  }
+
+  populateReportsListError() {
+    const reportsListError = document.getElementById('reports-list-error');
+    reportsListError.innerHTML = 'Terjadi kesalahan, nih.';
+    reportsListError.style.display = 'block';
   }
 
   async _setupMap() {
-    this._map = await Map.build('#reportsmap');
+    this._map = await Leaflet.build('#reports-map', {
+      zoom: 8,
+    });
   }
 
-  showLoading() {
-    const musicsLoader = document.getElementById('loader');
-    musicsLoader.style.display = 'block';
+  showLoading(selector) {
+    const loader = document.querySelector(selector);
+    loader.style.display = 'block';
   }
 
-  hideLoading() {
-    const musicsLoader = document.getElementById('loader');
-    musicsLoader.style.display = 'none';
+  hideLoading(selector) {
+    const loader = document.querySelector(selector);
+    loader.style.display = 'none';
   }
 }
