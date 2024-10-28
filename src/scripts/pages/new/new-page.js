@@ -1,7 +1,8 @@
 import { NewPresenter } from './new-presenter';
 import Leaflet from '../../utils/leaflet';
 import Camera from '../../utils/camera';
-import { getBase64, getCurrentPosition } from '../../utils';
+import CONFIG from '../../config';
+import { getBase64 } from '../../utils';
 
 export default class NewPage {
   _presenter = null;
@@ -30,7 +31,13 @@ export default class NewPage {
               <label for="new-form-title-input" class="new-form__title-title">Judul Laporan</label>
 
               <div class="new-form__title-container">
-                <input id="new-form-title-input" type="text" name="title" placeholder="Masukkan judul laporan" aria-describedby="title-input-more-info">
+                <input
+                  id="new-form-title-input"
+                  type="text"
+                  name="title"
+                  placeholder="Masukkan judul laporan"
+                  aria-describedby="title-input-more-info"
+                >
               </div>
               <div id="title-input-more-info">Pastikan judul laporan dibuat dengan jelas dan deskriptif dalam 1 kalimat.</div>
             </div>
@@ -41,19 +48,19 @@ export default class NewPage {
                 <div class="new-form-damage-level-minor-container">
                   <input id="new-form-damage-level-minor-input" type="radio" name="damageLevel" value="minor">
                   <label for="new-form-damage-level-minor-input">
-                    Rendah <span title="Contoh: Lubang kecil di jalan, kerusakan ringan pada tanda lalu lintas, dll."><i data-feather="help-circle"></i></span>
+                    Rendah <span title="Contoh: Lubang kecil di jalan, kerusakan ringan pada tanda lalu lintas, dll."><i class="far fa-question-circle"></i></span>
                   </label>
                 </div>
                 <div class="new-form-damage-level-moderate-container">
                   <input id="new-form-damage-level-moderate-input" type="radio" name="damageLevel" value="moderate">
                   <label for="new-form-damage-level-moderate-input">
-                    Sedang <span title="Contoh: Jalan retak besar, trotoar amblas, lampu jalan mati, dll."><i data-feather="help-circle"></i></span>
+                    Sedang <span title="Contoh: Jalan retak besar, trotoar amblas, lampu jalan mati, dll."><i class="far fa-question-circle"></i></span>
                   </label>
                 </div>
                 <div class="new-form-damage-level-severe-container">
                   <input id="new-form-damage-level-severe-input" type="radio" name="damageLevel" value="severe">
                   <label for="new-form-damage-level-severe-input">
-                    Berat <span title="Contoh: Jembatan ambruk, tiang listrik roboh, longsor yang menutup jalan, dll."><i data-feather="help-circle"></i></span>
+                    Berat <span title="Contoh: Jembatan ambruk, tiang listrik roboh, longsor yang menutup jalan, dll."><i class="far fa-question-circle"></i></span>
                   </label>
                 </div>
               </div>
@@ -62,7 +69,11 @@ export default class NewPage {
               <label for="new-form-description-input" class="new-form__description-title">Keterangan</label>
 
               <div class="new-form__description-container">
-                <textarea id="new-form-description-input" name="description" placeholder="Masukkan keterangan lengkap laporan. Anda dapat menjelaskan apa kejadiannya, dimana, kapan, dll." aria-describedby="title-more-info"></textarea>
+                <textarea 
+                  id="new-form-description-input"
+                  name="description"
+                  placeholder="Masukkan keterangan lengkap laporan. Anda dapat menjelaskan apa kejadiannya, dimana, kapan, dll."
+                ></textarea>
               </div>
             </div>
             <div class="form-control">
@@ -72,7 +83,16 @@ export default class NewPage {
               <div class="new-form__documentations-container">
                 <div class="new-form__documentations__buttons">
                   <label tabindex="0" class="btn btn-outline" for="new-form-documentations-input">Ambil Gambar</label>
-                  <input id="new-form-documentations-input" class="new-form__documentations__input" name="documentations" type="file" accept="image/*" multiple aria-multiline="true" aria-describedby="documentations-more-info">
+                  <input
+                    id="new-form-documentations-input"
+                    class="new-form__documentations__input"
+                    name="documentations"
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    aria-multiline="true"
+                    aria-describedby="documentations-more-info"
+                  >
                   <button type="button" id="new-form-documentations-camera" class="btn btn-outline">Buka Kamera</button>
                 </div>
                 <div id="new-form-camera-container" class="new-form__camera-container">
@@ -128,13 +148,11 @@ export default class NewPage {
     this._form.addEventListener('submit', async (event) => {
       event.preventDefault();
 
-      const evidenceImages = this._takenPictures.map((picture) => picture.imageUrl);
-
       await this._presenter.postNewReport({
         title: title.value,
         damageLevel: damageLevel.value,
         description: description.value,
-        evidenceImages: evidenceImages,
+        evidenceImages: this._takenPictures.map((picture) => picture.imageUrl),
         latitude: latitude.value,
         longitude: longitude.value,
       });
@@ -142,9 +160,9 @@ export default class NewPage {
 
     const documentations = this._form.elements.namedItem('documentations');
     documentations.addEventListener('change', async (event) => {
-      const insertingPicturesPromises = Object.values(event.srcElement.files).map(async (file) => {
-        await this._addTakenPicture(file);
-      });
+      const insertingPicturesPromises = Object
+        .values(event.srcElement.files)
+        .map(async (file) => await this._addTakenPicture(file));
       await Promise.all(insertingPicturesPromises);
 
       await this._populateTakenPictures();
@@ -154,18 +172,22 @@ export default class NewPage {
     document
       .getElementById('new-form-documentations-camera')
       .addEventListener('click', async (event) => {
-        if (Camera.isMediaDevicesAvailable()) {
-          cameraContainer.classList.toggle('open');
-          this._isCameraOpen = !this._isCameraOpen;
-
-          if (this._isCameraOpen) {
-            this._setupCamera();
-            event.currentTarget.textContent = 'Tutup Kamera';
-          } else {
-            this._camera?.stop();
-            event.currentTarget.textContent = 'Buka Kamera';
-          }
+        if (!Camera.isMediaDevicesAvailable()) {
+          return;
         }
+
+        cameraContainer.classList.toggle('open');
+        this._isCameraOpen = !this._isCameraOpen;
+
+        if (!this._isCameraOpen) {
+          this._camera.stop();
+          event.currentTarget.textContent = 'Buka Kamera';
+
+          return;
+        }
+
+        this._setupCamera();
+        event.currentTarget.textContent = 'Tutup Kamera';
       });
   }
 
@@ -174,22 +196,33 @@ export default class NewPage {
       zoom: 15,
     });
 
+    // Add more tile
+    this._map.addNewRasterTile('MapTiler', 'https://api.maptiler.com/maps/streets-v2/{z}/{x}/{y}.png?key=L1V7oYaAoswTHnKhMMJ8', {
+      attributions: '<a href="https://www.maptiler.com/copyright/" target="_blank">&copy; MapTiler</a> <a href="https://www.openstreetmap.org/copyright" target="_blank">&copy; OpenStreetMap contributors</a>',
+    });
+    this._map.addMaptilerTile('MapTiler Vector');
+    this._map.addMapTilerGeocoding();
+
+    // Preparing marker for select coordinate
     const centerCoordinate = this._map.getCenter();
+
+    this._updateLatLngInput(...centerCoordinate);
 
     const draggableMarker = this._map.addMarker(centerCoordinate, {
       draggable: 'true',
     });
 
-    this._updateLatLng(centerCoordinate.lat, centerCoordinate.lng);
-
     this._map.addMarkerEventListener(draggableMarker, 'dragend', (event) => {
       const coordinate = event.target.getLatLng();
-      this._updateLatLng(coordinate.lat, coordinate.lng);
+      this._updateLatLngInput(coordinate.lat, coordinate.lng);
     });
 
     this._map.addMapEventListener('click', (event) => {
       draggableMarker.setLatLng(event.latlng);
-      this._updateLatLng(event.latlng.lat, event.latlng.lng);
+      this._updateLatLngInput(event.latlng.lat, event.latlng.lng);
+
+      // Keep center
+      event.sourceTarget.flyTo(event.latlng);
     });
   }
 
@@ -231,7 +264,7 @@ export default class NewPage {
   async _populateTakenPictures() {
     const outputs = document.getElementById('new-form-documentations-outputs');
 
-    const listOfPictures = this._takenPictures.map((picture, index) => {
+    const listOfPictures = this._takenPictures.map((picture) => {
       return `
         <li class="new-form__documentations__outputs-item">
           <button type="button" data-deletepictureid="${picture.id}" class="new-form__documentations__outputs-item__delete-btn">
@@ -275,7 +308,7 @@ export default class NewPage {
     return selectedPicture;
   }
 
-  _updateLatLng(latitude, longitude) {
+  _updateLatLngInput(latitude, longitude) {
     this._form.elements.namedItem('latitude').value = latitude;
     this._form.elements.namedItem('longitude').value = longitude;
   }

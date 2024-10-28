@@ -1,6 +1,7 @@
 import { getAllReports } from '../../data/api';
+import { getPlaceNameByCoordinate } from '../../utils';
 
-class HomePresenter {
+export class HomePresenter {
   constructor(view) {
     this._view = view;
   }
@@ -8,9 +9,16 @@ class HomePresenter {
   async getReports() {
     this._view.showLoading('#loader');
     try {
-      const response = await getAllReports();
+      const reportsPromises = (await getAllReports()).data.map(async (report) => {
+        const placeName = await getPlaceNameByCoordinate(report.location.latitude, report.location.longitude);
+        return {
+          ...report,
+          location: { ...report.location, placeName },
+        };
+      });
+      const reports = await Promise.all(reportsPromises);
 
-      this._view.populateReportsList(response.data);
+      this._view.populateReportsList(reports);
     } catch (error) {
       console.error('Something went error:', error);
       this._view.populateReportsListError();
@@ -19,5 +27,3 @@ class HomePresenter {
     }
   }
 }
-
-export { HomePresenter };

@@ -6,16 +6,9 @@ export default class LoginPage {
 
   render() {
     return `
-      <section>
-        <div class="login__container">
-          <div class="login__hero">
-            <h2 class="login__title">Login</h2>
-          </div>
-        </div>
-      </section>
-
-      <section>
-        <div class="login-form__container container">
+      <section class="login-container">
+        <div class="login-form-container">
+          <h2 class="login__title">Masuk akun</h2>
           <div id="loader" class="loader"></div>
 
           <form id="login-form" class="login-form">
@@ -23,19 +16,19 @@ export default class LoginPage {
               <label for="login-form-email-input" class="login-form__email-title">Email</label>
 
               <div class="login-form__title-container">
-                <input id="login-form-email-input" type="email" name="email" placeholder="johndoe@gmail.com">
+                <input id="login-form-email-input" type="email" name="email" placeholder="Contoh: nama@email.com">
               </div>
             </div>
             <div class="form-control">
               <label for="login-form-password-input" class="login-form__password-title">Password</label>
 
               <div class="login-form__title-container">
-                <input id="login-form-password-input" type="password" name="password" placeholder="********">
+                <input id="login-form-password-input" type="password" name="password" placeholder="Masukkan password Anda">
               </div>
             </div>
-            <div class="form-buttons">
+            <div class="form-buttons login-form__form-buttons">
               <button class="btn" type="submit">Masuk</button>
-              <span>Belum punya akun? <a href="#/register">Register</a></span>
+              <p class="login-form__do-not-have-account">Belum punya akun? <a href="#/register">Daftar</a></p>
             </div>
           </form>
         </div>

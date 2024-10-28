@@ -1,0 +1,25 @@
+{
+  "message": "Success to retrieve report with id report-taskfsldmmxkaxso",
+  "data": {
+    "id": "report-taskfsldmmxkaxso",
+    "damageLevel": "minor",
+    "title": "Lampu Merah kurang banyak",
+    "description": "Lampu Merah kurang banyak Lampu Merah kurang banyak Lampu Merah kurang banyak",
+    "evidenceImages": [
+      "https://picsum.photos/1200/700?random=5",
+      "https://picsum.photos/1200/700?random=6"
+    ],
+    "location": {
+      "latitude": -6.5,
+      "longitude": 106.5
+    },
+    "userOwner": {
+      "id": "user-akdsjvniduvn",
+      "name": "Tari Sukmiati",
+      "email": "tarisukmiati@gmail.com",
+      "photoUrl": "https://ui-avatars.com/api/?name=Tari Sukmiati&background=random"
+    },
+    "createdAt": "2024-10-05T14:48:00.000Z",
+    "updatedAt": "2024-10-06T00:48:00.000Z"
+  }
+}

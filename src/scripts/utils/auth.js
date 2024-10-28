@@ -1,7 +1,5 @@
-import routes from '../routes/routes';
 import { parseAndCombineActiveUrl } from '../routes/url-parser';
-
-const ACCESS_TOKEN_KEY = 'accessToken';
+import CONFIG from '../config';
 
 const unauthenticatedRoutesOnly = [
   '/login',
@@ -32,26 +30,33 @@ export function checkAuthenticatedRoute(callback) {
 }
 
 export function getAccessToken() {
-  const accessToken = localStorage.getItem(ACCESS_TOKEN_KEY);
-  return accessToken === 'null' || accessToken === 'undefined' ? null : accessToken;
+  try {
+    const accessToken = localStorage.getItem(CONFIG.ACCESS_TOKEN_KEY);
+    return accessToken === 'null' || accessToken === 'undefined'
+      ? null
+      : accessToken;
+  } catch {
+    console.error('Gagal mendapatkan access token');
+    return null;
+  }
 }
 
 export function putAccessToken(token) {
   try {
-    localStorage.setItem(ACCESS_TOKEN_KEY, token);
+    localStorage.setItem(CONFIG.ACCESS_TOKEN_KEY, token);
     return true;
-  } catch (error) {
-    console.error('Error:', error);
+  } catch {
+    console.error('Gagal menyimpan access token');
     return false;
   }
 }
 
 export function getLogout() {
   try {
-    localStorage.removeItem(ACCESS_TOKEN_KEY);
+    localStorage.removeItem(CONFIG.ACCESS_TOKEN_KEY);
     return true;
-  } catch (error) {
-    console.log('Error:', error);
+  } catch {
+    console.error('Gagal menyimpan menghapus access token');
     return false;
   }
 }

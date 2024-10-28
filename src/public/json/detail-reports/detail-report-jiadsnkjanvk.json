@@ -1,0 +1,25 @@
+{
+  "message": "Success to retrieve report with id report-jiadsnkjanvk",
+  "data": {
+    "id": "report-jiadsnkjanvk",
+    "damageLevel": "moderate",
+    "title": "Stasiun Bandung",
+    "description": "Stasiun Bandung Stasiun Bandung Stasiun Bandung",
+    "evidenceImages": [
+      "https://picsum.photos/1200/700?random=3",
+      "https://picsum.photos/1200/700?random=4"
+    ],
+    "location": {
+      "latitude": -6,
+      "longitude": 106
+    },
+    "userOwner": {
+      "id": "user-akdsjvniduvn",
+      "name": "Bambang",
+      "email": "Bambang@gmail.com",
+      "photoUrl": "https://ui-avatars.com/api/?name=Jane Doe&background=random"
+    },
+    "createdAt": "2024-10-01T14:48:00.000Z",
+    "updatedAt": "2024-10-02T00:48:00.000Z"
+  }
+}

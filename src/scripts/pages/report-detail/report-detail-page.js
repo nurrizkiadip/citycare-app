@@ -1,7 +1,12 @@
-import { showFormattedDate } from '../../utils';
-import { ReportDetailPresenter } from './report-detail-presenter';
-import { parseActiveUrl } from '../../routes/url-parser';
-import { generateReportCommentItemTemplate } from '../../../templates';
+import {
+  generateRemoveReportButtonTemplate,
+  generateReportCommentItemTemplate,
+  generateReportDetailImageTemplate,
+  generateSaveReportButtonTemplate
+} from '../../utils/templates';
+import {createCarousel, generateDamageLevelBadge, getPlaceNameByCoordinate, showFormattedDate,} from '../../utils';
+import {ReportDetailPresenter} from './report-detail-presenter';
+import {parseActiveUrl} from '../../routes/url-parser';
 import Leaflet from '../../utils/leaflet';
 
 export default class ReportDetailPage {
@@ -17,28 +22,24 @@ export default class ReportDetailPage {
           </h2>
 
           <div class="report-detail__more-info">
-            <div id="report-detail-createdat" class="report-detail__createdat"><i data-feather="calendar"></i></div>
+            <div class="report-detail__more-info__inline">
+              <div id="report-detail-createdat" class="report-detail__createdat"><i class="fas fa-calendar-alt"></i></div>
+              <div id="report-detail-location-place-name" class="report-detail__location__place-name"><i class="fas fa-map"></i></div>
+            </div>
             <div class="report-detail__more-info__inline">
               <div id="report-detail-location-latitude" class="report-detail__location__latitude">Latitude:</div>
               <div id="report-detail-location-longitude" class="report-detail__location__longitude">Longitude:</div>
             </div>
-            <div>Dilaporkan oleh: <span id="report-detail-author" class="report-detail__author"></span></div>
+            <div id="report-detail-author" class="report-detail__author">Dilaporkan oleh:</div>
           </div>
 
-          <div id="report-detail-damage-level" class="report-detail__damage-level">
-            <span class="report-detail__damage-level__minor" data-damage-level="minor">Kerusakan Rendah</span>
-            <span class="report-detail__damage-level__moderate" data-damage-level="moderate">Kerusakan Sedang</span>
-            <span class="report-detail__damage-level__severe" data-damage-level="severe">Kerusakan Berat</span>
-          </div>
+          <div id="report-detail-damage-level" class="report-detail__damage-level"></div>
         </div>
 
         <div class="report-detail__body-container container">
-          <img
-            id="report-detail-image"
-            class="report-detail__image"
-            src="https://ui-avatars.com/api/?name=Image Report&background=random"
-            alt="GAMBAR LAPORAN"
-          >
+          <div id="report-detail-images" class="report-detail__images">
+            ${generateReportDetailImageTemplate()}
+          </div>
 
           <div class="report-detail__body">
             <article class="report-detail__description-container">
@@ -54,9 +55,7 @@ export default class ReportDetailPage {
             <hr>
             <article class="report-detail__actions-container">
               <div>Aksi</div>
-              <div>
-                <button id="report-detail-save" class="btn btn-transparent">Simpan laporan <i data-feather="bookmark"></i></button>
-              </div>
+              <div id="report-detail-actions"></div>
             </article>
           </div>
         </div>
@@ -71,7 +70,7 @@ export default class ReportDetailPage {
             <form id="report-detail-comment-form-form" class="report-detail__comment-form__form">
               <textarea name="body" placeholder="Beri tanggapan terkait laporan."></textarea>
               <button id="report-detail-comments-form-submit" class="btn" type="submit">
-                <i id="report-detail-comments-form-loader" class="report-detail__comments-form__loader" data-feather="loader"></i>
+                <i id="report-detail-comments-form-loader" class="report-detail__comments-form__loader fas fa-spinner"></i>
                 Tanggapi
               </button>
             </form>
@@ -97,16 +96,17 @@ export default class ReportDetailPage {
 
     await this._setupMap();
     this._setupCommentForm();
-    this._setupBookmark(route.id);
 
     await this._presenter.getReportDetail();
     await this._presenter.getCommentsList();
   }
 
-  populateReportDetail(report) {
+  async populateReportDetail(report) {
     if (typeof report !== 'object') {
       throw new Error('reports must be an object');
     }
+
+    this._presenter.renderBookmarkButton(report);
 
     // Title
     const reportTitle = document.getElementById('report-detail-title');
@@ -121,23 +121,23 @@ export default class ReportDetailPage {
     reportLocationLatitude.dataset.value = JSON.stringify(report.location.latitude);
     const reportLocationLongitude = document.getElementById('report-detail-location-longitude');
     reportLocationLongitude.dataset.value = JSON.stringify(report.location.longitude);
+    const reportLocationPlaceName = document.getElementById('report-detail-location-place-name');
+    reportLocationPlaceName.dataset.value = report.location.placeName;
 
     // Author
     const reportAuthor = document.getElementById('report-detail-author');
     reportAuthor.dataset.value = report.userOwner.name;
 
     // Damage level badge
-    const reportDamageLevelAll = document.querySelectorAll('#report-detail-damage-level > [data-damage-level]');
-    reportDamageLevelAll.forEach((damageLevel) => {
-      if (report.damageLevel !== damageLevel.dataset.damageLevel) {
-        damageLevel.style.display = 'none';
-      }
-    });
+    const reportDamageLevel = document.querySelector('#report-detail-damage-level');
+    reportDamageLevel.innerHTML = generateDamageLevelBadge(report.damageLevel);
 
     // Image
-    const reportImage = document.getElementById('report-detail-image');
-    reportImage.src = report.evidenceImages[0];
-    reportImage.alt = report.title;
+    const reportImages = document.getElementById('report-detail-images');
+    reportImages.innerHTML = report.evidenceImages
+      .map((evidenceImage) => generateReportDetailImageTemplate(evidenceImage, report.title))
+      .join('');
+    createCarousel(reportImages);
 
     // Description
     const reportDescription = document.getElementById('report-detail-description');
@@ -191,15 +191,20 @@ export default class ReportDetailPage {
     this._map = await Leaflet.build('#report-detail-map', {
       zoom: 15,
     });
+
+    this._map.addNewRasterTile('MapTiler', 'https://api.maptiler.com/maps/streets-v2/{z}/{x}/{y}.png?key=L1V7oYaAoswTHnKhMMJ8', {
+      attributions: '<a href="https://www.maptiler.com/copyright/" target="_blank">&copy; MapTiler</a> <a href="https://www.openstreetmap.org/copyright" target="_blank">&copy; OpenStreetMap contributors</a>',
+    });
+    this._map.addMaptilerTile('MapTiler Vector');
   }
 
   _setupCommentForm() {
     const form = document.getElementById('report-detail-comment-form-form');
     const body = form.elements.namedItem('body');
-    form.addEventListener('submit', (event) => {
+    form.addEventListener('submit', async (event) => {
       event.preventDefault();
 
-      this._presenter.postNewComment({
+      await this._presenter.postNewComment({
         body: body.value,
       });
     });
@@ -209,12 +214,34 @@ export default class ReportDetailPage {
     console.log('Success storing new comment');
   }
 
-  _setupBookmark(reportId) {
-    const saveButton = document.getElementById('report-detail-save');
-    saveButton.addEventListener('click', () => {
-      window.alert('Fitur simpan laporan akan hadir segera!');
-      console.log(reportId);
+  async renderSaveButton(report) {
+    const actions = document.getElementById('report-detail-actions');
+    actions.innerHTML = generateSaveReportButtonTemplate();
+
+    document.querySelector('#report-detail-save').addEventListener('click', async () => {
+      await this._presenter.saveReport(report);
+      await this._presenter.renderBookmarkButton(report);
     });
+  }
+
+  async renderRemoveButton(report) {
+    const actions = document.getElementById('report-detail-actions');
+    actions.innerHTML = generateRemoveReportButtonTemplate();
+
+    document.querySelector('#report-detail-remove').addEventListener('click', async () => {
+      await this._presenter.removeReport(report.id);
+      await this._presenter.renderBookmarkButton(report);
+    });
+  }
+
+  saveToBookmarkSuccessfully() {
+    window.alert('Saving from bookmark was success');
+    console.log('Saving from bookmark was success');
+  }
+
+  removeFromBookmarkSuccessfully() {
+    window.alert('Removing from bookmark was success');
+    console.log('Removing from bookmark was success');
   }
 
   showLoading(selector) {

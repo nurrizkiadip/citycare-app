@@ -1,84 +1,87 @@
+import { generateReportItemTemplate } from '../../utils/templates';
 import { HomePresenter } from './home-presenter';
 import Leaflet from '../../utils/leaflet';
-import { generateReportItemTemplate } from '../../../templates';
+import CONFIG from '../../config';
 
 export default class HomePage {
+  _presenter = null;
+
   render() {
     return `
       <section class="map">
         <div id="reports-map" class="reports-map"></div>
       </section>
 
-      <section class="report">
-        <div class="container">
-          <h2 class="section-title">Daftar Laporan Kerusakan</h2>
+      <section class="container">
+        <h2 class="section-title">Daftar Laporan Kerusakan</h2>
 
-          <div id="reports-list" class="reports-list"></div>
-          <div id="reports-list-empty" class="reports-list__empty"></div>
-          <div id="reports-list-error" class="reports-list__error"></div>
-          <div id="loader" class="loader"></div>
-        </div>
+        <div id="reports" class="reports"></div>
+        <div id="loader" class="loader"></div>
       </section>
     `;
   }
 
   async afterRender() {
-    const presenter = new HomePresenter(this);
+    this._presenter = new HomePresenter(this);
 
     // Setup map first before another
     await this._setupMap();
-    await presenter.getReports();
+
+    await this._presenter.getReports();
   }
 
-  populateReportsList(reports) {
+  async populateReportsList(reports) {
     if (!Array.isArray(reports)) {
       throw new Error('reports must be an array');
     }
 
     if (reports.length <= 0) {
-      const reportsListEmpty = document.getElementById('reports-list-empty');
-      reportsListEmpty.innerHTML = 'Daftar laporan sedang kosong, nih.';
-      reportsListEmpty.style.display = 'block';
+      document.getElementById('reports').innerHTML = `
+        <div id="reports-list-empty" class="reports-list__empty">
+          Daftar laporan tersimpan sedang kosong, nih.
+        </div>
+      `;
 
       return;
     }
 
-    const elements = reports.map((report) => {
+    const html = reports.map((report) => {
       if (this._map) {
         const coordinate = [report.location.latitude, report.location.longitude];
-        const markerOptions = {
-          alt: report.title,
-        };
-        const popupOptions = {
-          content: report.title,
-        };
+        const markerOptions = { alt: report.title };
+        const popupOptions = { content: report.title };
         this._map.addMarker(coordinate, markerOptions, popupOptions);
       }
 
       return generateReportItemTemplate(report);
-    });
+    }).join('');
 
-    const reportsList = document.getElementById('reports-list');
-    reportsList.innerHTML = elements.join('');
-    reportsList.style.display = 'grid';
-
-    document
-      .querySelectorAll('button[data-savereportid]')
-      .forEach((button) => button.addEventListener('click', (event) => {
-        window.alert('Fitur simpan laporan akan hadir segera!')
-      }));
+    document.getElementById('reports').innerHTML = `
+      <div id="reports-list" class="reports-list">
+        ${html}
+      </div>
+    `;
   }
 
   populateReportsListError() {
-    const reportsListError = document.getElementById('reports-list-error');
-    reportsListError.innerHTML = 'Terjadi kesalahan, nih.';
-    reportsListError.style.display = 'block';
+    document.getElementById('reports').innerHTML = `
+      <div id="reports-list-error" class="reports-list__error">
+        Terjadi kesalahan, nih.
+      </div>
+    `;
   }
 
   async _setupMap() {
     this._map = await Leaflet.build('#reports-map', {
       zoom: 8,
     });
+
+    this._map.addNewRasterTile('MapTiler', 'https://api.maptiler.com/maps/streets-v2/{z}/{x}/{y}.png?key=L1V7oYaAoswTHnKhMMJ8', {
+      attributions: '<a href="https://www.maptiler.com/copyright/" target="_blank">&copy; MapTiler</a> <a href="https://www.openstreetmap.org/copyright" target="_blank">&copy; OpenStreetMap contributors</a>',
+    });
+    this._map.addMaptilerTile('MapTiler Vector');
+
+    this._map.addMapTilerGeocoding(CONFIG.MAP_SERVICE_API_KEY);
   }
 
   showLoading(selector) {

@@ -1,0 +1,44 @@
+{
+  "message": "Success to retrieve all comments for report id report-taskfsldmmxkaxso",
+  "data": [
+    {
+      "id": "comment-fksajkjan",
+      "body": "Ini adalah komentar 1",
+      "reportId": "report-taskfsldmmxkaxso",
+      "userOwner": {
+        "id": "user-akdsjvniduvn",
+        "name": "Susilo",
+        "email": "susilo@gmail.com",
+        "photoUrl": "https://ui-avatars.com/api/?name=Susilo&background=random"
+      },
+      "createdAt": "2024-09-29T14:48:00.000Z",
+      "updatedAt": "2024-09-30T00:48:00.000Z"
+    },
+    {
+      "id": "comment-askdfnds",
+      "body": "Ini adalah komentar 2",
+      "reportId": "report-taskfsldmmxkaxso",
+      "userOwner": {
+        "id": "user-akdsjvniduvn",
+        "name": "Yunita",
+        "email": "yunita@gmail.com",
+        "photoUrl": "https://ui-avatars.com/api/?name=Yunita&background=random"
+      },
+      "createdAt": "2024-09-29T14:48:00.000Z",
+      "updatedAt": "2024-09-30T00:48:00.000Z"
+    },
+    {
+      "id": "comment-amoiwfns",
+      "body": "Ini adalah komentar 3",
+      "reportId": "report-taskfsldmmxkaxso",
+      "userOwner": {
+        "id": "user-akdsjvniduvn",
+        "name": "Usy",
+        "email": "usy@gmail.com",
+        "photoUrl": "https://ui-avatars.com/api/?name=Usy&background=random"
+      },
+      "createdAt": "2024-09-29T14:48:00.000Z",
+      "updatedAt": "2024-09-30T00:48:00.000Z"
+    }
+  ]
+}

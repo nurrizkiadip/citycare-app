@@ -1,23 +1,38 @@
-import { Icon, icon, map, marker, popup, tileLayer } from 'leaflet';
+import { Icon, icon, map, marker, popup, tileLayer, control, maptilerLayer } from 'leaflet';
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 import { getCurrentPosition } from './index';
+import { MaptilerLayer, MaptilerStyle } from '@maptiler/leaflet-maptilersdk';
+import { GeocodingControl } from '@maptiler/geocoding-control/leaflet';
+import CONFIG from '../config';
 
 export default class Leaflet {
   _element = null;
   _map = null;
 
+  _layerControls = null;
+
   constructor(selector, options = {}) {
     this._element = document.querySelector(selector);
+
+    const baseLayer = tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    });
 
     this._map = map(this._element, {
       zoom: 5,
       scrollWheelZoom: false,
+      layers: [baseLayer],
       ...options,
     });
 
-    this.addBaseLayer();
+    const baseLayers = { 'OpenStreetMap': baseLayer };
+    const overlays = {};
+    this._layerControls = control.layers(baseLayers, overlays, {
+      position: 'topleft',
+    });
+    this._layerControls.addTo(this._map);
   }
 
   /**
@@ -41,18 +56,13 @@ export default class Leaflet {
       window.alert(error.message);
       console.error(error.message);
 
+      const coordinate = [-6.200000, 106.816666];
+
       return new Leaflet(selector, {
         ...options,
-        center: [-6.200000, 106.816666],
+        center: coordinate,
       });
     }
-  }
-
-  addBaseLayer() {
-    const baseLayer = tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-    });
-    baseLayer.addTo(this._map);
   }
 
   changeCamera(coordinate, zoomLevel = undefined) {
@@ -60,7 +70,22 @@ export default class Leaflet {
   }
 
   getCenter() {
-    return this._map.getCenter();
+    const { lat, lng } = this._map.getCenter();
+    return [lat, lng];
+  }
+
+  addMapTilerGeocoding(options = {}) {
+    const geocoderControl = new GeocodingControl({
+      apiKey: CONFIG.MAP_SERVICE_API_KEY,
+      zoom: 15,
+      flyTo: true,
+      keepOpen: false,
+      placeholder: 'Cari lokasi...',
+      errorMessage: 'Lokasi tidak ditemukan',
+      ...options,
+    });
+
+    geocoderControl.addTo(this._map);
   }
 
   createIcon(options = {}) {
@@ -107,5 +132,19 @@ export default class Leaflet {
 
   addMapEventListener(eventName, callback) {
     this._map.on(eventName, callback);
+  }
+
+  addNewRasterTile(name, url, options = {}) {
+    const tile = tileLayer(url, options);
+    this._layerControls.addBaseLayer(tile, name);
+  }
+
+  addMaptilerTile(name, options = {}) {
+    const maptiler = new MaptilerLayer({
+      apiKey: CONFIG.MAP_SERVICE_API_KEY,
+      style: MaptilerStyle.STREETS,
+      ...options,
+    });
+    this._layerControls.addBaseLayer(maptiler, name);
   }
 }

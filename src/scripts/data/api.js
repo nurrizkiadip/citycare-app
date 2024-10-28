@@ -1,21 +1,20 @@
 import { getAccessToken } from '../utils/auth';
+import CONFIG from '../config';
 
-const BASE_URL = window.location.origin;
-
-export const ENDPOINTS = {
+const ENDPOINTS = {
   // Auth
-  REGISTER: `${BASE_URL}/register.json`,
-  LOGIN: `${BASE_URL}/login.json`,
-  MY_USER_INFO: `${BASE_URL}/my-user-info.json`,
+  REGISTER: `${CONFIG.BASE_URL}/json/register.json`,
+  LOGIN: `${CONFIG.BASE_URL}/json/login.json`,
+  MY_USER_INFO: `${CONFIG.BASE_URL}/json/my-user-info.json`,
 
   // Report
-  REPORT_LIST: `${BASE_URL}/list.json`,
-  REPORT_DETAIL: (id) => `${BASE_URL}/detail-${id}.json`,
-  STORE_NEW_REPORT: `${BASE_URL}/new-report.json`,
+  REPORT_LIST: `${CONFIG.BASE_URL}/json/list.json`,
+  REPORT_DETAIL: (id) => `${CONFIG.BASE_URL}/json/detail-reports/detail-${id}.json`,
+  STORE_NEW_REPORT: `${CONFIG.BASE_URL}/json/new-report.json`,
 
   // Report Comment
-  REPORT_COMMENTS_LIST: (reportId) => `${BASE_URL}/detail-${reportId}-comments.json`,
-  STORE_NEW_REPORT_COMMENT: (reportId) => `${BASE_URL}/detail-${reportId}-new-comment.json`,
+  REPORT_COMMENTS_LIST: (reportId) => `${CONFIG.BASE_URL}/json/detail-reports/detail-${reportId}-comments.json`,
+  STORE_NEW_REPORT_COMMENT: (reportId) => `${CONFIG.BASE_URL}/json/detail-reports/detail-${reportId}-new-comment.json`,
 };
 
 export async function getRegistered({ name, email, password}) {

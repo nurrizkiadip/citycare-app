@@ -6,43 +6,36 @@ export default class RegisterPage {
 
   render() {
     return `
-      <section>
-        <div class="register__container">
-          <div class="register__hero">
-            <h2 class="register__title">Register</h2>
-          </div>
-        </div>
-      </section>
-
-      <section>
-        <div class="register-form__container container">
+      <section class="register-container">
+        <div class="register-form-container">
+          <h2 class="register__title">Daftar akun</h2>
           <div id="loader" class="loader"></div>
 
           <form id="register-form" class="register-form">
             <div class="form-control">
-              <label for="register-form-name-input" class="register-form__name-title">Email</label>
+              <label for="register-form-name-input" class="register-form__name-title">Nama lengkap</label>
 
               <div class="register-form__title-container">
-                <input id="register-form-name-input" type="text" name="name" placeholder="John Doe">
+                <input id="register-form-name-input" type="text" name="name" placeholder="Masukkan nama lengkap Anda">
               </div>
             </div>
             <div class="form-control">
               <label for="register-form-email-input" class="register-form__email-title">Email</label>
 
               <div class="register-form__title-container">
-                <input id="register-form-email-input" type="email" name="email" placeholder="johndoe@gmail.com">
+                <input id="register-form-email-input" type="email" name="email" placeholder="Contoh: nama@email.com">
               </div>
             </div>
             <div class="form-control">
               <label for="register-form-password-input" class="register-form__password-title">Password</label>
 
               <div class="register-form__title-container">
-                <input id="register-form-password-input" type="password" name="password" placeholder="********">
+                <input id="register-form-password-input" type="password" name="password" placeholder="Masukkan password baru">
               </div>
             </div>
-            <div class="form-buttons">
-              <button class="btn" type="submit">Daftar</button>
-              <span>Sudah punya akun? <a href="#/login">Login</a></span>
+            <div class="form-buttons register-form__form-buttons">
+              <button class="btn" type="submit">Daftar akun</button>
+              <p class="register-form__already-have-account">Sudah punya akun? <a href="#/login">Masuk</a></p>
             </div>
           </form>
         </div>

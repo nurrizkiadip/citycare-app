@@ -1,13 +1,17 @@
-import { parseActiveUrl, parseAndCombineActiveUrl, parseAndCombineUrl, parseUrl } from '../routes/url-parser';
 import {
-  generateAuthenticatedNavigationList,
-  generateMainNavigationList,
-  generateUnauthenticatedNavigationList
-} from '../../templates';
+  parseActiveUrl,
+  parseAndCombineActiveUrl,
+  parseAndCombineUrl,
+  parseUrl,
+} from '../routes/url-parser';
+import {
+  generateAuthenticatedNavigationListTemplate,
+  generateMainNavigationListTemplate,
+  generateUnauthenticatedNavigationListTemplate
+} from '../utils/templates';
 import { getAccessToken, getLogout } from '../utils/auth';
 import { transitionHelper } from '../utils';
 import routes from '../routes/routes';
-import feather from 'feather-icons';
 
 class App {
   _currentPath = null;
@@ -30,6 +34,12 @@ class App {
       if (!this._drawerNavigation.contains(event.target) && !this._drawerButton.contains(event.target)) {
         this._drawerNavigation.classList.remove('open');
       }
+
+      this._drawerNavigation.querySelectorAll('a').forEach((link) => {
+        if (link.contains(event.target)) {
+          this._drawerNavigation.classList.remove('open');
+        }
+      })
     });
   }
 
@@ -38,14 +48,15 @@ class App {
     const navListMain = this._drawerNavigation.children['navlist-main'];
     const navList = this._drawerNavigation.children['navlist'];
 
+    // User not log in
     if (!isLogin) {
       navListMain.innerHTML = '';
-      navList.innerHTML = generateUnauthenticatedNavigationList();
+      navList.innerHTML = generateUnauthenticatedNavigationListTemplate();
       return;
     }
 
-    navListMain.innerHTML = generateMainNavigationList();
-    navList.innerHTML = generateAuthenticatedNavigationList();
+    navListMain.innerHTML = generateMainNavigationListTemplate();
+    navList.innerHTML = generateAuthenticatedNavigationListTemplate();
 
     const logoutButton = document.querySelector('#logout-button');
     logoutButton.addEventListener('click', (event) => {
@@ -74,11 +85,7 @@ class App {
       let targetThumbnail = null;
 
       if (navigationType === 'list-to-detail') {
-        const extractUrl = parseActiveUrl();
-        targetThumbnail = document.querySelector(`[data-reportid="${extractUrl.id}"]`);
-        if (targetThumbnail) {
-          targetThumbnail.querySelector('img').style.viewTransitionName = 'report-img';
-        }
+        targetThumbnail = this._applyListToDetailNavigation();
       }
 
       const transition = transitionHelper({
@@ -87,25 +94,20 @@ class App {
           await page.afterRender();
 
           if (navigationType === 'detail-to-list') {
-            const extractUrl = parseUrl(this._currentPath);
-            targetThumbnail = document.querySelector(`[data-reportid="${extractUrl.id}"]`);
-            if (targetThumbnail) {
-              targetThumbnail.querySelector('img').style.viewTransitionName = 'report-img';
-            }
+            targetThumbnail = this._applyDetailToListNavigation();
           }
         },
       });
 
       transition.updateCallbackDone.then(() => {
+        window.scrollTo({ top: 0,behavior: 'instant' });
         this._setupNavigationList();
-        feather.replace();
       });
       transition.finished.then(() => {
         // Clear the temporary tag
-        if (targetThumbnail) {
-          targetThumbnail.style.viewTransitionName = '';
-        }
+        this._cleanTransitionName(targetThumbnail);
 
+        // Update current path after transition has been finished
         this._currentPath = window.location.hash.slice(1).toLowerCase();
       });
     }
@@ -127,6 +129,52 @@ class App {
     }
 
     return null;
+  }
+
+  _applyListToDetailNavigation() {
+    const extractUrl = parseActiveUrl();
+
+    const target = document.querySelector(`[data-reportid="${extractUrl.id}"]`);
+
+    if (!target) {
+      return null;
+    }
+
+    target.querySelector('.report-item__image').style.viewTransitionName = 'report-img';
+    target.querySelector('.report-item__title').style.viewTransitionName = 'report-title';
+    target.querySelector('.report-item__createdat').style.viewTransitionName = 'report-createdat';
+    target.querySelector('.report-item__description').style.viewTransitionName = 'report-description';
+    target.querySelector('.report-item__author').style.viewTransitionName = 'report-reporter';
+
+    return target;
+  }
+
+  _applyDetailToListNavigation() {
+    const extractUrl = parseUrl(this._currentPath);
+
+    const target = document.querySelector(`[data-reportid="${extractUrl.id}"]`);
+
+    if (!target) {
+      return null;
+    }
+
+    target.querySelector('.report-item__image').style.viewTransitionName = 'report-img';
+    target.querySelector('.report-item__title').style.viewTransitionName = 'report-title';
+    target.querySelector('.report-item__createdat').style.viewTransitionName = 'report-createdat';
+    target.querySelector('.report-item__description').style.viewTransitionName = 'report-description';
+    target.querySelector('.report-item__author').style.viewTransitionName = 'report-reporter';
+
+    return target;
+  }
+
+  _cleanTransitionName(targetThumbnail) {
+    if (targetThumbnail) {
+      targetThumbnail.querySelector('.report-item__image').style.viewTransitionName = '';
+      targetThumbnail.querySelector('.report-item__title').style.viewTransitionName = '';
+      targetThumbnail.querySelector('.report-item__createdat').style.viewTransitionName = '';
+      targetThumbnail.querySelector('.report-item__description').style.viewTransitionName = '';
+      targetThumbnail.querySelector('.report-item__author').style.viewTransitionName = '';
+    }
   }
 }
 
