@@ -53,7 +53,7 @@
 @media screen and (width > 800px) {
   /* MAIN */
   .reports-map {
-    min-height: 600px;
+    min-height: 500px;
   }
 
   .reports-list {
@@ -114,7 +114,7 @@
 
   /* MAIN */
   .reports-map {
-    min-height: 700px;
+    min-height: 600px;
   }
 
   .reports-list {

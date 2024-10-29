@@ -39,7 +39,7 @@ class App {
         if (link.contains(event.target)) {
           this._drawerNavigation.classList.remove('open');
         }
-      })
+      });
     });
   }
 
@@ -100,7 +100,7 @@ class App {
       });
 
       transition.updateCallbackDone.then(() => {
-        window.scrollTo({ top: 0,behavior: 'instant' });
+        window.scrollTo({ top: 0, behavior: 'instant' });
         this._setupNavigationList();
       });
       transition.finished.then(() => {

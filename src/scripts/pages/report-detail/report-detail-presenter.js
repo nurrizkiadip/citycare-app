@@ -8,7 +8,7 @@ import {
   putReport,
   removeReport,
 } from '../../data/database';
-import {getPlaceNameByCoordinate} from "../../utils";
+import Leaflet from '../../utils/leaflet';
 
 class ReportDetailPresenter {
   _reportId = null;
@@ -22,7 +22,7 @@ class ReportDetailPresenter {
     this._view.showLoading('#report-detail-loader');
     try {
       const { data } = await getReportById(this._reportId);
-      const placeName = await getPlaceNameByCoordinate(data.location.latitude, data.location.longitude);
+      const placeName = await Leaflet.getPlaceNameByCoordinate(data.location.latitude, data.location.longitude);
       const report = {
         ...data,
         location: { ...data.location, placeName },
@@ -76,7 +76,6 @@ class ReportDetailPresenter {
       this._view.saveToBookmarkSuccessfully();
     } catch (error) {
       console.error('Something went error:', error);
-    } finally {
     }
   }
 
@@ -86,7 +85,6 @@ class ReportDetailPresenter {
       this._view.removeFromBookmarkSuccessfully();
     } catch (error) {
       console.error('Something went error:', error);
-    } finally {
     }
   }
 

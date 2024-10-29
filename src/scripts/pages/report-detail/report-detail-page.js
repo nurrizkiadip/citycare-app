@@ -2,11 +2,11 @@ import {
   generateRemoveReportButtonTemplate,
   generateReportCommentItemTemplate,
   generateReportDetailImageTemplate,
-  generateSaveReportButtonTemplate
+  generateSaveReportButtonTemplate,
 } from '../../utils/templates';
-import {createCarousel, generateDamageLevelBadge, getPlaceNameByCoordinate, showFormattedDate,} from '../../utils';
-import {ReportDetailPresenter} from './report-detail-presenter';
-import {parseActiveUrl} from '../../routes/url-parser';
+import { createCarousel, generateDamageLevelBadge, showFormattedDate } from '../../utils';
+import { ReportDetailPresenter } from './report-detail-presenter';
+import { parseActiveUrl } from '../../routes/url-parser';
 import Leaflet from '../../utils/leaflet';
 
 export default class ReportDetailPage {

@@ -1,6 +1,18 @@
 import { parseAndCombineActiveUrl } from '../routes/url-parser';
 import CONFIG from '../config';
 
+export function getAccessToken() {
+  try {
+    const accessToken = localStorage.getItem(CONFIG.ACCESS_TOKEN_KEY);
+    return accessToken === 'null' || accessToken === 'undefined'
+      ? null
+      : accessToken;
+  } catch {
+    console.error('Gagal mendapatkan access token');
+    return null;
+  }
+}
+
 const unauthenticatedRoutesOnly = [
   '/login',
   '/register',
@@ -27,18 +39,6 @@ export function checkAuthenticatedRoute(callback) {
   }
 
   return callback;
-}
-
-export function getAccessToken() {
-  try {
-    const accessToken = localStorage.getItem(CONFIG.ACCESS_TOKEN_KEY);
-    return accessToken === 'null' || accessToken === 'undefined'
-      ? null
-      : accessToken;
-  } catch {
-    console.error('Gagal mendapatkan access token');
-    return null;
-  }
 }
 
 export function putAccessToken(token) {

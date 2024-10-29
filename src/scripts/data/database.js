@@ -6,7 +6,9 @@ const OBJECT_STORE_NAME = 'citycare';
 
 const dbPromise = openDB(DATABASE_NAME, DATABASE_VERSION, {
   upgrade: (database) => {
-    database.createObjectStore(OBJECT_STORE_NAME, { keyPath: 'id' });
+    database.createObjectStore(OBJECT_STORE_NAME, {
+      keyPath: 'id',
+    });
   },
 });
 
@@ -23,7 +25,7 @@ export async function getReportById(id) {
 }
 
 export async function putReport(report) {
-  if (!report.hasOwnProperty('id')) {
+  if (!Object.hasOwn(report, 'id')) {
     return;
   }
 

@@ -111,7 +111,7 @@ export default class Camera {
       });
     }
 
-    this._cheeseButtonElement.removeEventListener('click', this._cheeseButtonHandler)
+    this._cheeseButtonElement.removeEventListener('click', this._cheeseButtonHandler);
   }
 
   async _getStream() {
@@ -168,6 +168,6 @@ export default class Camera {
     this._cheeseButtonElement = document.querySelector(selector);
     this._cheeseButtonHandler = callback;
 
-    this._cheeseButtonElement.addEventListener('click', this._cheeseButtonHandler)
+    this._cheeseButtonElement.addEventListener('click', this._cheeseButtonHandler);
   }
 }

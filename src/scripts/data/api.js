@@ -17,18 +17,22 @@ const ENDPOINTS = {
   STORE_NEW_REPORT_COMMENT: (reportId) => `${CONFIG.BASE_URL}/json/detail-reports/detail-${reportId}-new-comment.json`,
 };
 
-export async function getRegistered({ name, email, password}) {
+export async function getRegistered({ name, email, password }) {
+  // eslint-disable-next-line no-unused-vars
+  const data = JSON.stringify({ name, email, password });
+
   const fetchResponse = await fetch(ENDPOINTS.REGISTER, {
     // method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-    // body: JSON.stringify({ name, email, password }),
+    // body: data,
   });
   return await fetchResponse.json();
 }
 
 export async function getLogin({ email, password }) {
+  // eslint-disable-next-line no-unused-vars
   const data = JSON.stringify({ email, password });
 
   const fetchResponse = await fetch(ENDPOINTS.LOGIN, {
@@ -68,6 +72,7 @@ export async function getReportById(id) {
 
 export async function storeNewReport({ title, damageLevel, description, evidenceImages, location }) {
   const accessToken = getAccessToken();
+  // eslint-disable-next-line no-unused-vars
   const data = JSON.stringify({ title, damageLevel, description, evidenceImages, location });
 
   const fetchResponse = await fetch(ENDPOINTS.STORE_NEW_REPORT, {
@@ -92,6 +97,7 @@ export async function getAllCommentsByReportId(reportId) {
 
 export async function storeNewCommentByReportId(reportId, { body }) {
   const accessToken = getAccessToken();
+  // eslint-disable-next-line no-unused-vars
   const data = JSON.stringify({ body });
 
   const fetchResponse = await fetch(ENDPOINTS.STORE_NEW_REPORT_COMMENT(reportId), {

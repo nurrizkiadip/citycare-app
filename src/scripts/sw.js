@@ -35,7 +35,7 @@ registerRoute(new Route(
 ));
 
 registerRoute(new Route(
-  ({ request , url }) => {
+  ({ request, url }) => {
     return request.destination === 'image' && !url.href.startsWith('https://tile.openstreetmap.org');
   },
   new StaleWhileRevalidate({
@@ -44,22 +44,28 @@ registerRoute(new Route(
 ));
 
 self.addEventListener('push', (event) => {
-  event.waitUntil(async () => {
-    const report = event.data.json();
+  const chainPromise = async () => {
+    console.log('push event');
+    console.log(event);
 
     await self.registration.showNotification('report.title', {
       body: 'report.options.body',
       icon: 'report.options.icon',
-    })
-  });
+    });
+  };
+
+  event.waitUntil(chainPromise());
 });
 
 self.addEventListener('notificationclick', (event) => {
-  event.waitUntil(async () => {
-    const clickedNotification = event.notification;
-    clickedNotification.close();
-
+  const chainPromise = async () => {
     console.log('Notification has been clicked');
+    console.log(event);
+
+    event.notification.close();
+
     await self.clients.openWindow('https://www.dicoding.com/');
-  });
+  };
+
+  event.waitUntil(chainPromise());
 });

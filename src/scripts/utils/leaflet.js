@@ -1,4 +1,4 @@
-import { Icon, icon, map, marker, popup, tileLayer, control, maptilerLayer } from 'leaflet';
+import { Icon, icon, map, marker, popup, tileLayer, control } from 'leaflet';
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
@@ -62,6 +62,20 @@ export default class Leaflet {
         ...options,
         center: coordinate,
       });
+    }
+  }
+
+  static async getPlaceNameByCoordinate(latitude, longitude) {
+    const url = `https://api.maptiler.com/geocoding/${longitude},${latitude}.json?key=${CONFIG.MAP_SERVICE_API_KEY}`;
+
+    try {
+      const response = await fetch(url);
+      const json = await response.json();
+      const place = json.features[0].place_name_id.split(', ');
+      return [place.at(-2), place.at(-1)].map((name) => name).join(', ');
+    } catch {
+      console.error('Gagal mendapatkan nama lokasi');
+      return `${latitude},${longitude}`;
     }
   }
 

@@ -1,7 +1,6 @@
 import { NewPresenter } from './new-presenter';
 import Leaflet from '../../utils/leaflet';
 import Camera from '../../utils/camera';
-import CONFIG from '../../config';
 import { getBase64 } from '../../utils';
 
 export default class NewPage {

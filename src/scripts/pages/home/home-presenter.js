@@ -1,5 +1,5 @@
 import { getAllReports } from '../../data/api';
-import { getPlaceNameByCoordinate } from '../../utils';
+import Leaflet from '../../utils/leaflet';
 
 export class HomePresenter {
   constructor(view) {
@@ -10,7 +10,7 @@ export class HomePresenter {
     this._view.showLoading('#loader');
     try {
       const reportsPromises = (await getAllReports()).data.map(async (report) => {
-        const placeName = await getPlaceNameByCoordinate(report.location.latitude, report.location.longitude);
+        const placeName = await Leaflet.getPlaceNameByCoordinate(report.location.latitude, report.location.longitude);
         return {
           ...report,
           location: { ...report.location, placeName },

@@ -5,7 +5,6 @@ import {
   generateDamageLevelSevereTemplate
 } from './templates';
 import { tns } from 'tiny-slider';
-import CONFIG from "../config";
 
 export function transitionHelper({ skipTransition = false, updateDOM }) {
   if (typeof updateDOM !== 'function') {
@@ -100,7 +99,7 @@ export function getBase64(file) {
     reader.readAsDataURL(file);
     reader.onload = () => resolve(reader.result);
     reader.onerror = (error) => reject(error);
-  })
+  });
 }
 
 export function createCarousel(containerElement, options = {}) {
@@ -118,18 +117,4 @@ export function createCarousel(containerElement, options = {}) {
 
     ...options,
   });
-}
-
-export async function getPlaceNameByCoordinate(latitude, longitude) {
-  const url = `https://api.maptiler.com/geocoding/${longitude},${latitude}.json?key=${CONFIG.MAP_SERVICE_API_KEY}`;
-
-  try {
-    const response = await fetch(url);
-    const json = await response.json();
-    const place = json.features[0].place_name_id.split(', ');
-    return [place.at(-2), place.at(-1)].map((name) => name).join(', ');
-  } catch {
-    console.error('Gagal mendapatkan nama lokasi');
-    return `${latitude},${longitude}`;
-  }
 }

@@ -8,6 +8,7 @@ class RegisterPresenter {
   async getRegistered({ name, email, password }) {
     this._view.showLoading('#loader');
     try {
+      // eslint-disable-next-line no-unused-vars
       const response = await getRegistered({ name, email, password });
 
       this._view.registeredSuccessfully();
