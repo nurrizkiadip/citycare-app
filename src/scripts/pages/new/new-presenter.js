@@ -1,4 +1,7 @@
-import { storeNewReport } from '../../data/api';
+import {
+  sendReportToAllUserViaNotification,
+  storeNewReport
+} from '../../data/api';
 
 class NewPresenter {
   constructor(view) {
@@ -8,22 +11,45 @@ class NewPresenter {
   async postNewReport({ title, damageLevel, description, evidenceImages, latitude, longitude }) {
     this._view.showLoading('#new-report-loader');
     try {
-      const response = await storeNewReport({
-        title: title.value,
-        damageLevel: damageLevel.value,
-        description: description.value,
+      const data = {
+        title: title,
+        damageLevel: damageLevel,
+        description: description,
         evidenceImages: evidenceImages,
-        location: {
-          latitude: latitude.value,
-          longitude: longitude.value,
-        },
-      });
+        latitude: latitude,
+        longitude: longitude,
+      };
 
-      this._view.storeSuccessfully(response);
+      const response = await storeNewReport(data);
+
+      if (!response.ok) {
+        console.error('postNewReport: response:', response);
+        this._view.storeFailed(response.message);
+        return;
+      }
+
+      this._notifyToAllUser(response.data.id);
+      this._view.storeSuccessfully(response.message, response.data);
     } catch (error) {
-      console.error('Something went error:', error);
+      console.error('postNewReport: error:', error);
+      this._view.storeFailed(error.message);
     } finally {
       this._view.hideLoading('#new-report-loader');
+    }
+  }
+
+  async _notifyToAllUser(reportId) {
+    try {
+      const response = await sendReportToAllUserViaNotification(reportId);
+
+      if (!response.ok) {
+        console.error('_notifyToAllUser: response:', response);
+        return;
+      }
+
+      console.log('_notifyToAllUser:', response.message);
+    } catch (error) {
+      console.error('_notifyToAllUser: error:', error);
     }
   }
 }

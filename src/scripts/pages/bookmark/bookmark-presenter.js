@@ -9,10 +9,10 @@ export class BookmarkPresenter {
     this._view.showLoading('#loader');
     try {
       const reports = await getAllReports();
-      this._view.populateReportsList(reports);
+      this._view.populateBookmarkedReports('Berhasil mendapatkan daftar laporan tersimpan.', reports);
     } catch (error) {
-      console.error('Something went error:', error);
-      this._view.populateReportsListError();
+      console.error('getAllBookmarkedReports: error:', error);
+      this._view.populateBookmarkedReportsError(error.message);
     } finally {
       this._view.hideLoading('#loader');
     }

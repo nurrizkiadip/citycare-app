@@ -14,7 +14,7 @@ export default class Camera {
   _streaming = false;
 
   static isMediaDevicesAvailable() {
-    return 'mediaDevices' in navigator && 'getUserMedia' in navigator.mediaDevices;
+    return 'mediaDevices' in navigator;
   }
 
   constructor({ cameraContainer, cameraList, video, canvas, options = {} }) {
@@ -23,10 +23,10 @@ export default class Camera {
     this._videoElement = video;
     this._canvasElement = canvas;
 
-    if ('width' in options) {
+    if (Object.hasOwn(options, 'width')) {
       this._width = options.width;
     }
-    if ('height' in options) {
+    if (Object.hasOwn(options, 'height')) {
       this._height = options.height;
     }
 
@@ -48,7 +48,7 @@ export default class Camera {
         this._selectCameraElement.appendChild(option);
       });
     } catch (error) {
-      console.error(`An error occurred: ${error}`);
+      console.error('_populateCameraList: error:', error);
     }
   }
 
@@ -69,13 +69,12 @@ export default class Camera {
 
     // Event untuk mengganti akses kamera
     this._selectCameraElement.addEventListener('change', async () => {
+      await this.stop();
       await this.launch();
     });
   }
 
   async launch() {
-    Camera.stopAllStreams();
-
     this._currentStream = await this._getStream();
     this._videoElement.srcObject = this._currentStream;
     this._videoElement.play();
@@ -86,10 +85,22 @@ export default class Camera {
   }
 
   static addNewStream(stream) {
+    if (!Array.isArray(window.currentStreams)) {
+      window.currentStreams = [];
+
+      return;
+    }
+
     window.currentStreams = [...window.currentStreams, stream];
   }
 
   static stopAllStreams() {
+    if (!Array.isArray(window.currentStreams)) {
+      window.currentStreams = [];
+
+      return;
+    }
+
     const activeStreams = window.currentStreams.filter((stream) => stream.active);
     activeStreams.forEach((stream) => {
       stream.getTracks().forEach((track) => {
@@ -134,11 +145,11 @@ export default class Camera {
             },
           });
         } catch (fallbackError) {
-          console.error('Tidak dapat mengakses kamera:', fallbackError);
+          console.error('_getStream: fallbackError:', fallbackError);
           return null;
         }
       } else {
-        console.error('Error mengakses kamera:', error);
+        console.error('_getStream: error:', error);
         return null;
       }
     }
@@ -150,7 +161,7 @@ export default class Camera {
     context.fillRect(0, 0, this._canvasElement.width, this._canvasElement.height);
   }
 
-  takePicture() {
+  async takePicture() {
     if (!(this._width && this._height)) {
       return null;
     }
@@ -161,7 +172,15 @@ export default class Camera {
     this._canvasElement.height = this._height;
     context.drawImage(this._videoElement, 0, 0, this._width, this._height);
 
-    return this._canvasElement.toDataURL('image/png');
+    return await new Promise((resolve) => {
+      this._canvasElement.toBlob((blob) => {
+        if (blob !== null) {
+          resolve(blob);
+        }
+
+        resolve(this._canvasElement.toDataURL('image/png'));
+      });
+    });
   }
 
   addCheeseButtonListener(selector, callback) {

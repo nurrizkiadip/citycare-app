@@ -30,7 +30,7 @@ export default class HomePage {
     await this._presenter.getReports();
   }
 
-  async populateReportsList(reports) {
+  async populateReportsList(message, reports) {
     if (!Array.isArray(reports)) {
       throw new Error('reports must be an array');
     }
@@ -63,10 +63,11 @@ export default class HomePage {
     `;
   }
 
-  populateReportsListError() {
+  populateReportsListError(message) {
     document.getElementById('reports').innerHTML = `
       <div id="reports-list-error" class="reports-list__error">
-        Terjadi kesalahan, nih.
+        Terjadi kesalahan mengambil daftar laporan, nih.<br>
+        ${message}
       </div>
     `;
   }

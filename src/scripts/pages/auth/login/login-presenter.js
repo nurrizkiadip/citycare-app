@@ -10,13 +10,19 @@ class LoginPresenter {
     this._view.showLoading('#loader');
     try {
       const response = await getLogin({ email, password });
-      putAccessToken(response.data.token);
 
-      this._view.loginSuccessfully();
-      return true;
+      if (!response.ok) {
+        console.error('getLogin: response:', response);
+        this._view.loginFailed(response.message);
+        return;
+      }
+
+      putAccessToken(response.data.accessToken);
+
+      this._view.loginSuccessfully(response.message, response.data);
     } catch (error) {
-      console.error('Something went error:', error);
-      return false;
+      console.error('getLogin: error:', error);
+      this._view.loginFailed(error.message);
     } finally {
       this._view.hideLoading('#loader');
     }

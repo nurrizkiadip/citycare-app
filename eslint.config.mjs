@@ -16,6 +16,7 @@ export default [
   // Dicoding Academy Style Guide
   daStyle,
 
+  // Custom rules
   {
     rules: {
       'space-infix-ops': ['error'],

@@ -1,4 +1,5 @@
 import {
+  generateNotifyMeButtonTemplate,
   generateRemoveReportButtonTemplate,
   generateReportCommentItemTemplate,
   generateReportDetailImageTemplate,
@@ -12,6 +13,7 @@ import Leaflet from '../../utils/leaflet';
 export default class ReportDetailPage {
   _presenter = null;
   _map = null;
+  _form = null;
 
   render() {
     return `
@@ -55,7 +57,10 @@ export default class ReportDetailPage {
             <hr>
             <article class="report-detail__actions-container">
               <div>Aksi</div>
-              <div id="report-detail-actions"></div>
+              <div id="report-detail-actions" class="report-detail__actions">
+                <div id="report-detail-save-actions"></div>
+                <div id="report-detail-notify-me-actions"></div>
+              </div>
             </article>
           </div>
         </div>
@@ -77,9 +82,7 @@ export default class ReportDetailPage {
           </article>
           <hr>
           <article class="report-detail__comments-list-container">
-            <div id="report-detail-comments-list" class="report-detail__comments-list"></div>
-            <div id="report-detail-comments-list-empty" class="report-detail__comments-list__empty"></div>
-            <div id="report-detail-comments-list-error" class="report-detail__comments-list__error"></div>
+            <div id="report-detail-comments" class="report-detail__comments"></div>
             <div id="report-detail-comments-list-loader" class="loader"></div>
           </article>
         </div>
@@ -101,12 +104,13 @@ export default class ReportDetailPage {
     await this._presenter.getCommentsList();
   }
 
-  async populateReportDetail(report) {
+  async populateReportDetail(message, report) {
     if (typeof report !== 'object') {
       throw new Error('reports must be an object');
     }
 
     this._presenter.renderBookmarkButton(report);
+    this.renderNotifyMeButton();
 
     // Title
     const reportTitle = document.getElementById('report-detail-title');
@@ -126,7 +130,7 @@ export default class ReportDetailPage {
 
     // Author
     const reportAuthor = document.getElementById('report-detail-author');
-    reportAuthor.dataset.value = report.userOwner.name;
+    reportAuthor.dataset.value = report.reporter.name;
 
     // Damage level badge
     const reportDamageLevel = document.querySelector('#report-detail-damage-level');
@@ -158,33 +162,44 @@ export default class ReportDetailPage {
     }
   }
 
-  populateReportDetailError() {
-    window.alert('Terjadi kesalahan mendapatkan detail laporan kerusakan, nih.');
+  populateReportDetailError(message) {
+    window.alert(message);
+    window.location.href = '/';
   }
 
-  populateReportDetailComments(comments) {
+  populateReportDetailComments(message, comments) {
     if (!Array.isArray(comments)) {
       throw new Error('comments must be an array');
     }
 
     if (comments.length <= 0) {
-      const reportsListEmpty = document.getElementById('report-detail-comments-list-empty');
-      reportsListEmpty.innerHTML = 'Daftar komentar laporan sedang kosong, nih.';
-      reportsListEmpty.style.display = 'block';
+      document.getElementById('report-detail-comments').innerHTML = `
+        <div id="report-detail-comments-list-empty" class="report-detail__comments-list__empty">
+          Daftar komentar laporan sedang kosong, nih.
+        </div>
+      `;
 
       return;
     }
 
-    const elements = comments.map((comment) => generateReportCommentItemTemplate(comment));
+    const html = comments
+      .map((comment) => generateReportCommentItemTemplate(comment))
+      .join('');
 
-    const commentsListContainer = document.getElementById('report-detail-comments-list');
-    commentsListContainer.innerHTML = elements.join('');
+    document.getElementById('report-detail-comments').innerHTML = `
+      <div id="report-detail-comments-list" class="report-detail__comments-list">
+        ${html}
+      </div>
+    `;
   }
 
-  populateCommentsListError() {
-    const reportsListError = document.getElementById('report-detail-comments-list-error');
-    reportsListError.innerHTML = 'Terjadi kesalahan, nih.';
-    reportsListError.style.display = 'block';
+  populateCommentsListError(response) {
+    document.getElementById('report-detail-comments').innerHTML = `
+      <div id="report-detail-comments-list-error" class="report-detail__comments-list__error">
+        Terjadi kesalahan mendapatkan daftar komentar, nih.<br>
+        ${'message' in response ? response.message : ''}
+      </div>
+    `;
   }
 
   async _setupMap() {
@@ -199,23 +214,38 @@ export default class ReportDetailPage {
   }
 
   _setupCommentForm() {
-    const form = document.getElementById('report-detail-comment-form-form');
-    const body = form.elements.namedItem('body');
-    form.addEventListener('submit', async (event) => {
+    this._form = document.getElementById('report-detail-comment-form-form');
+    this._form.addEventListener('submit', async (event) => {
       event.preventDefault();
 
       await this._presenter.postNewComment({
-        body: body.value,
+        body: this._form.elements.namedItem('body').value,
       });
     });
   }
 
-  postNewCommentSuccessfully() {
+  /**
+   * Catatan pribadi:
+   * TODO: Setelah berhasil, komentar baru belum langsung tampil karena StaleWhileRevalidate. Harus direfresh untuk menampilkan yang terbaru.
+   */
+  postNewCommentSuccessfully(message) {
+    window.alert(message);
     console.log('Success storing new comment');
+
+    this.clearForm();
+    this._presenter.getCommentsList();
+  }
+
+  postNewCommentFailed(message) {
+    window.alert(message);
+  }
+
+  clearForm() {
+    this._form.reset();
   }
 
   async renderSaveButton(report) {
-    const actions = document.getElementById('report-detail-actions');
+    const actions = document.getElementById('report-detail-save-actions');
     actions.innerHTML = generateSaveReportButtonTemplate();
 
     document.querySelector('#report-detail-save').addEventListener('click', async () => {
@@ -225,7 +255,7 @@ export default class ReportDetailPage {
   }
 
   async renderRemoveButton(report) {
-    const actions = document.getElementById('report-detail-actions');
+    const actions = document.getElementById('report-detail-save-actions');
     actions.innerHTML = generateRemoveReportButtonTemplate();
 
     document.querySelector('#report-detail-remove').addEventListener('click', async () => {
@@ -234,14 +264,31 @@ export default class ReportDetailPage {
     });
   }
 
-  saveToBookmarkSuccessfully() {
-    window.alert('Saving from bookmark was success');
-    console.log('Saving from bookmark was success');
+  async renderNotifyMeButton() {
+    const actions = document.getElementById('report-detail-notify-me-actions');
+    actions.innerHTML = generateNotifyMeButtonTemplate();
+
+    document.querySelector('#report-detail-notify-me').addEventListener('click', async () => {
+      await this._presenter.notifyMe();
+    });
   }
 
-  removeFromBookmarkSuccessfully() {
-    window.alert('Removing from bookmark was success');
-    console.log('Removing from bookmark was success');
+  saveToBookmarkSuccessfully(message) {
+    window.alert(message);
+    console.log(message);
+  }
+
+  saveToBookmarkFailed(message) {
+    window.alert(message);
+  }
+
+  removeFromBookmarkSuccessfully(message) {
+    window.alert(message);
+    console.log(message);
+  }
+
+  removeFromBookmarkFailed(message) {
+    window.alert(message);
   }
 
   showLoading(selector) {

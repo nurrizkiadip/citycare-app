@@ -1,6 +1,6 @@
 import {
   getAllCommentsByReportId,
-  getReportById,
+  getReportById, sendCommentToReportOwnerViaNotification, sendReportToMeViaNotification,
   storeNewCommentByReportId,
 } from '../../data/api';
 import {
@@ -21,17 +21,27 @@ class ReportDetailPresenter {
   async getReportDetail() {
     this._view.showLoading('#report-detail-loader');
     try {
-      const { data } = await getReportById(this._reportId);
-      const placeName = await Leaflet.getPlaceNameByCoordinate(data.location.latitude, data.location.longitude);
+      const response = await getReportById(this._reportId);
+
+      if (!response.ok) {
+        console.error('getReportDetail: response:', response);
+        this._view.populateReportDetailError(response.message);
+        return;
+      }
+
+      const { latitude, longitude } = response.data.location;
       const report = {
-        ...data,
-        location: { ...data.location, placeName },
+        ...response.data,
+        location: {
+          ...response.data.location,
+          placeName: await Leaflet.getPlaceNameByCoordinate(latitude, longitude),
+        },
       };
 
-      this._view.populateReportDetail(report);
+      this._view.populateReportDetail(response.message, report);
     } catch (error) {
-      console.error('Something went error:', error);
-      this._view.populateReportDetailError();
+      console.error('getReportDetail: error:', error);
+      this._view.populateReportDetailError(error.message);
     } finally {
       this._view.hideLoading('#report-detail-loader');
     }
@@ -41,10 +51,10 @@ class ReportDetailPresenter {
     this._view.showLoading('#report-detail-comments-list-loader');
     try {
       const response = await getAllCommentsByReportId(this._reportId);
-      this._view.populateReportDetailComments(response.data);
+      this._view.populateReportDetailComments(response.message, response.data);
     } catch (error) {
-      console.error('Something went error:', error);
-      this._view.populateCommentsListError();
+      console.error('getCommentsList: error:', error);
+      this._view.populateCommentsListError(error.message);
     } finally {
       this._view.hideLoading('#report-detail-comments-list-loader');
     }
@@ -54,37 +64,77 @@ class ReportDetailPresenter {
     this._view.disableCommentSubmit();
     this._view.showLoading('#report-detail-comments-form-loader');
     try {
-      await storeNewCommentByReportId(this._reportId, { body });
-      this._view.postNewCommentSuccessfully();
-      await this.getCommentsList(this._reportId);
+      const response = await storeNewCommentByReportId(this._reportId, { body });
+
+      if (!response.ok) {
+        console.error('postNewComment: response:', response);
+        this._view.postNewCommentFailed(response.message);
+        return;
+      }
+
+      this.notifyReportOwner(response.data.id);
+      this._view.postNewCommentSuccessfully(response.message, response.data);
     } catch (error) {
-      console.error('Something went error:', error);
+      console.error('postNewComment: error:', error);
+      this._view.postNewCommentFailed(error.message);
     } finally {
       this._view.enableCommentSubmit();
       this._view.hideLoading('#report-detail-comments-form-loader');
     }
   }
 
-  async saveReport({ id, title, damageLevel, description, evidenceImages, location, userOwner, createdAt, updatedAt }) {
+  async notifyReportOwner(commentId) {
+    try {
+      const response = await sendCommentToReportOwnerViaNotification(this._reportId, commentId);
+
+      if (!response.ok) {
+        console.error('notifyReportOwner: response:', response);
+        return;
+      }
+
+      console.log('notifyReportOwner:', response.message);
+    } catch (error) {
+      console.error('notifyReportOwner: error:', error);
+    }
+  }
+
+  async notifyMe() {
+    try {
+      const response = await sendReportToMeViaNotification(this._reportId);
+
+      if (!response.ok) {
+        console.error('notifyMe: response:', response);
+        return;
+      }
+
+      console.log('notifyMe:', response.message);
+    } catch (error) {
+      console.error('notifyMe: error:', error);
+    }
+  }
+
+  async saveReport({ id, title, damageLevel, description, evidenceImages, location, reporter, createdAt, updatedAt }) {
     try {
       const data = {
         id, title, damageLevel, description,
-        evidenceImages, location, userOwner,
+        evidenceImages, location, reporter,
         createdAt, updatedAt,
       };
       await putReport(data);
-      this._view.saveToBookmarkSuccessfully();
+      this._view.saveToBookmarkSuccessfully('Success to save to bookmark');
     } catch (error) {
-      console.error('Something went error:', error);
+      console.error('saveReport: error:', error);
+      this._view.saveToBookmarkFailed(error.message);
     }
   }
 
   async removeReport(reportId) {
     try {
       await removeReport(reportId);
-      this._view.removeFromBookmarkSuccessfully();
+      this._view.removeFromBookmarkSuccessfully('Success to remove from bookmark');
     } catch (error) {
-      console.error('Something went error:', error);
+      console.error('removeReport: error:', error);
+      this._view.removeFromBookmarkFailed(error.message);
     }
   }
 

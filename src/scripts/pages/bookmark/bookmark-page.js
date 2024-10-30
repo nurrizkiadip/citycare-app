@@ -30,7 +30,7 @@ export default class BookmarkPage {
     await this._presenter.getAllBookmarkedReports();
   }
 
-  populateReportsList(reports) {
+  populateBookmarkedReports(message, reports) {
     if (!Array.isArray(reports)) {
       throw new Error('reports must be an array');
     }
@@ -63,10 +63,11 @@ export default class BookmarkPage {
     `;
   }
 
-  populateReportsListError() {
+  populateBookmarkedReportsError(message) {
     document.getElementById('reports').innerHTML = `
       <div id="reports-list-error" class="reports-list__error">
-        Terjadi kesalahan, nih.
+        Terjadi kesalahan mengambil daftar laporan tersimpan, nih.<br>
+        ${message}
       </div>
     `;
   }

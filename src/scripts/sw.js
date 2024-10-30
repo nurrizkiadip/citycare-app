@@ -45,13 +45,17 @@ registerRoute(new Route(
 
 self.addEventListener('push', (event) => {
   const chainPromise = async () => {
-    console.log('push event');
-    console.log(event);
-
-    await self.registration.showNotification('report.title', {
-      body: 'report.options.body',
-      icon: 'report.options.icon',
-    });
+    const data = event.data.text();
+    try {
+      const json = JSON.parse(data);
+      await self.registration.showNotification(json.title, {
+        body: json.options.body,
+      });
+    } catch {
+      await self.registration.showNotification('CityCare App', {
+        body: data,
+      });
+    }
   };
 
   event.waitUntil(chainPromise());
@@ -60,7 +64,6 @@ self.addEventListener('push', (event) => {
 self.addEventListener('notificationclick', (event) => {
   const chainPromise = async () => {
     console.log('Notification has been clicked');
-    console.log(event);
 
     event.notification.close();
 

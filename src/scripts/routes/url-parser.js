@@ -22,13 +22,13 @@ function combineUrlSegments(pathSegments) {
 }
 
 export function parseAndCombineActiveUrl() {
-  const pathname = window.location.hash.slice(1).toLowerCase();
+  const pathname = window.location.hash.slice(1);
   const urlSegments = extractUrlSegments(pathname);
   return combineUrlSegments(urlSegments);
 }
 
 export function parseActiveUrl() {
-  const pathname = window.location.hash.slice(1).toLowerCase();
+  const pathname = window.location.hash.slice(1);
   return extractUrlSegments(pathname);
 }
 

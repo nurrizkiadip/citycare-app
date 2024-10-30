@@ -1,7 +1,7 @@
 import { NewPresenter } from './new-presenter';
 import Leaflet from '../../utils/leaflet';
 import Camera from '../../utils/camera';
-import { getBase64 } from '../../utils';
+import { convertBase64ToBlob } from '../../utils';
 
 export default class NewPage {
   _presenter = null;
@@ -9,7 +9,7 @@ export default class NewPage {
   _map = null;
 
   _isCameraOpen = false;
-  _takenPictures = [];
+  _takenDocumentations = [];
 
   render() {
     return `
@@ -147,14 +147,16 @@ export default class NewPage {
     this._form.addEventListener('submit', async (event) => {
       event.preventDefault();
 
-      await this._presenter.postNewReport({
+      const data = {
         title: title.value,
         damageLevel: damageLevel.value,
         description: description.value,
-        evidenceImages: this._takenPictures.map((picture) => picture.imageUrl),
+        evidenceImages: this._takenDocumentations.map((picture) => picture.blob),
         latitude: latitude.value,
         longitude: longitude.value,
-      });
+      };
+
+      await this._presenter.postNewReport(data);
     });
 
     const documentations = this._form.elements.namedItem('documentations');
@@ -172,11 +174,13 @@ export default class NewPage {
       .getElementById('new-form-documentations-camera')
       .addEventListener('click', async (event) => {
         if (!Camera.isMediaDevicesAvailable()) {
+          console.log('Media Stream API tidak didukung oleh browser ini.');
+          window.alert('Media Stream API tidak didukung oleh browser ini.');
           return;
         }
 
         cameraContainer.classList.toggle('open');
-        this._isCameraOpen = !this._isCameraOpen;
+        this._isCameraOpen = cameraContainer.classList.contains('open');
 
         if (!this._isCameraOpen) {
           this._camera.stop();
@@ -241,39 +245,39 @@ export default class NewPage {
     this._camera.launch();
 
     this._camera.addCheeseButtonListener('#new-form-camera-take', async () => {
-      const imageUrl = this._camera.takePicture();
-      await this._addTakenPicture(imageUrl);
+      const image = await this._camera.takePicture();
+
+      await this._addTakenPicture(image);
       await this._populateTakenPictures();
     });
   }
 
-  async _addTakenPicture(imageUrl) {
-    let base64 = imageUrl;
+  async _addTakenPicture(image) {
+    let blob = image;
 
-    if (imageUrl instanceof File) {
-      base64 = await getBase64(imageUrl);
+    if (image instanceof String) {
+      blob = await convertBase64ToBlob(image, 'image/png');
     }
 
-    this._takenPictures = [...this._takenPictures, {
+    this._takenDocumentations = [...this._takenDocumentations, {
       id: new Date().getTime(),
-      imageUrl: base64,
+      blob: blob,
     }];
   }
 
   async _populateTakenPictures() {
-    const outputs = document.getElementById('new-form-documentations-outputs');
-
-    const listOfPictures = this._takenPictures.map((picture) => {
+    const html = this._takenDocumentations.map((picture, index) => {
+      const imageUrl = URL.createObjectURL(picture.blob);
       return `
         <li class="new-form__documentations__outputs-item">
           <button type="button" data-deletepictureid="${picture.id}" class="new-form__documentations__outputs-item__delete-btn">
-            <img src="${picture.imageUrl}" alt="">
+            <img src="${imageUrl}" alt="Dokumentasi ke-${index + 1}">
           </button>
         </li>
       `;
-    });
+    }).join('');
 
-    outputs.innerHTML = listOfPictures.join('');
+    document.getElementById('new-form-documentations-outputs').innerHTML = html;
 
     document
       .querySelectorAll('button[data-deletepictureid]')
@@ -290,7 +294,7 @@ export default class NewPage {
   }
 
   _removePicture(id) {
-    const selectedPicture = this._takenPictures.find((picture) => {
+    const selectedPicture = this._takenDocumentations.find((picture) => {
       return picture.id == id;
     });
 
@@ -300,7 +304,7 @@ export default class NewPage {
     }
 
     // Deleting selected selectedPicture from takenPictures
-    this._takenPictures = this._takenPictures.filter((picture) => {
+    this._takenDocumentations = this._takenDocumentations.filter((picture) => {
       return picture.id !== selectedPicture.id;
     });
 
@@ -312,8 +316,18 @@ export default class NewPage {
     this._form.elements.namedItem('longitude').value = longitude;
   }
 
-  storeSuccessfully() {
-    console.log('Success storing new report');
+  storeSuccessfully(message) {
+    window.alert(message);
+    this.clearForm();
+    window.location.href = '/';
+  }
+
+  storeFailed(message) {
+    window.alert(message);
+  }
+
+  clearForm() {
+    this._form.reset();
   }
 
   showLoading(selector) {

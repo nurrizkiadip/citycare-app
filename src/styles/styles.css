@@ -85,7 +85,11 @@ body {
   max-width: 1300px;
 }
 
-a {
+a,
+button {
+  min-height: 44px;
+  min-width: 44px;
+
   color: var(--primary-color);
 }
 
@@ -97,18 +101,23 @@ select {
 
 input,
 textarea {
+  min-height: 44px;
+  min-width: 44px;
   width: 100%;
   padding: 12px 10px;
   border-radius: 4px;
   border: 1px solid #D4D4D4;
-  resize: vertical;
 
   font-size: 1rem;
   font-family: 'Inter', sans-serif;
+
+  resize: vertical;
 }
 
 input[type=radio],
 input[type=checkbox] {
+  min-height: auto;
+  min-width: auto;
   width: auto;
   display: inline;
 
@@ -331,18 +340,21 @@ header {
   gap: 10px;
 }
 
-.navigation-drawer__navlist-main li a {
+.navigation-drawer__navlist-main li a,
+.navigation-drawer__navlist-main li button {
   color: #5D5D5D;
 }
 
-.navigation-drawer__navlist li a {
+.navigation-drawer__navlist li a,
+.navigation-drawer__navlist li button {
   color: #5D5D5D;
 }
 
 .navigation-drawer__navlist-main li a,
-.navigation-drawer__navlist li a {
-  min-height: 44px;
-  min-width: 44px;
+.navigation-drawer__navlist-main li button,
+.navigation-drawer__navlist li a,
+.navigation-drawer__navlist li button {
+  width: 100%;
   padding: 6px 10px;
 
   display: flex;
@@ -605,6 +617,8 @@ header {
 }
 
 .tns-nav > [aria-controls] {
+  min-height: auto;
+  min-width: auto;
   width: 10px;
   height: 10px;
   border-radius: 999px;
@@ -664,6 +678,13 @@ header {
   align-items: center;
 }
 
+.report-detail__actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
 /* Report comments section */
 .report-detail__comments-container {
   max-width: 800px;
@@ -692,9 +713,11 @@ header {
 }
 
 /* Report comments list */
-.report-detail__comments-list {
+.report-detail__comments {
   margin-block: 30px;
+}
 
+.report-detail__comments-list {
   display: grid;
   grid-template-columns: 1fr;
   gap: 32px;

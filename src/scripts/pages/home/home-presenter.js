@@ -9,19 +9,27 @@ export class HomePresenter {
   async getReports() {
     this._view.showLoading('#loader');
     try {
-      const reportsPromises = (await getAllReports()).data.map(async (report) => {
-        const placeName = await Leaflet.getPlaceNameByCoordinate(report.location.latitude, report.location.longitude);
-        return {
-          ...report,
-          location: { ...report.location, placeName },
-        };
-      });
+      const response = await getAllReports();
+
+      if (!response.ok) {
+        console.error('getReports: response:', response);
+        this._view.populateReportsListError(response.message);
+        return;
+      }
+
+      const reportsPromises = response.data.map(async (report) => ({
+        ...report,
+        location: {
+          ...report.location,
+          placeName: await Leaflet.getPlaceNameByCoordinate(report.location.latitude, report.location.longitude),
+        },
+      }));
       const reports = await Promise.all(reportsPromises);
 
-      this._view.populateReportsList(reports);
+      this._view.populateReportsList(response.message, reports);
     } catch (error) {
-      console.error('Something went error:', error);
-      this._view.populateReportsListError();
+      console.error('getReports: error:', error);
+      this._view.populateReportsListError(error.message);
     } finally {
       this._view.hideLoading('#loader');
     }

@@ -40,7 +40,7 @@ export default class Leaflet {
    * https://stackoverflow.com/questions/43431550/how-can-i-invoke-asynchronous-code-within-a-constructor
    * */
   static async build(selector, options = {}) {
-    if ('center' in options) {
+    if (Object.hasOwn(options, 'center')) {
       return new Leaflet(selector, options);
     }
 
@@ -53,8 +53,8 @@ export default class Leaflet {
         center: coordinate,
       });
     } catch (error) {
+      console.error('build: error:', error);
       window.alert(error.message);
-      console.error(error.message);
 
       const coordinate = [-6.200000, 106.816666];
 
@@ -73,8 +73,8 @@ export default class Leaflet {
       const json = await response.json();
       const place = json.features[0].place_name_id.split(', ');
       return [place.at(-2), place.at(-1)].map((name) => name).join(', ');
-    } catch {
-      console.error('Gagal mendapatkan nama lokasi');
+    } catch (error) {
+      console.error('getPlaceNameByCoordinate: error:', error);
       return `${latitude},${longitude}`;
     }
   }

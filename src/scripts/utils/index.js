@@ -26,8 +26,12 @@ export function transitionHelper({ skipTransition = false, updateDOM }) {
   return window.document.startViewTransition(updateDOM);
 }
 
+export function isServiceWorkerAvailable() {
+  return 'serviceWorker' in navigator;
+}
+
 export async function registerServiceWorker() {
-  if (!('serviceWorker' in navigator)) {
+  if (!isServiceWorkerAvailable()) {
     console.log('Browser ini tidak mendukung Service Worker API.');
     return;
   }
@@ -82,10 +86,14 @@ export function sleep(time = 1000) {
   return new Promise((resolve) => setTimeout(resolve, time));
 }
 
+export function isGeolocationAvailable() {
+  return 'geolocation' in navigator;
+}
+
 export function getCurrentPosition(options = {}) {
   return new Promise((resolve, reject) => {
-    if (!('geolocation' in navigator)) {
-      reject('Geolocation is not supported by your browser.');
+    if (!isGeolocationAvailable()) {
+      reject('Geolocation API tidak didukung oleh browser ini.');
       return;
     }
 
@@ -93,13 +101,52 @@ export function getCurrentPosition(options = {}) {
   });
 }
 
-export function getBase64(file) {
+/**
+ * Ref: https://stackoverflow.com/questions/18650168/convert-blob-to-base64
+ */
+export function convertBlobToBase64(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.readAsDataURL(file);
     reader.onload = () => resolve(reader.result);
     reader.onerror = (error) => reject(error);
   });
+}
+
+/**
+ * Ref: https://stackoverflow.com/questions/16245767/creating-a-blob-from-a-base64-string-in-javascript
+ */
+export function convertBase64ToBlob(base64Data, contentType = '', sliceSize = 512) {
+  const byteCharacters = atob(base64Data);
+  const byteArrays = [];
+
+  for (let offset = 0; offset < byteCharacters.length; offset += sliceSize) {
+    const slice = byteCharacters.slice(offset, offset + sliceSize);
+
+    const byteNumbers = new Array(slice.length);
+    for (let i = 0; i < slice.length; i++) {
+      byteNumbers[i] = slice.charCodeAt(i);
+    }
+
+    const byteArray = new Uint8Array(byteNumbers);
+    byteArrays.push(byteArray);
+  }
+
+  return new Blob(byteArrays, { type: contentType });
+}
+
+export function convertBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding)
+    .replace(/-/g, '+')
+    .replace(/_/g, '/');
+  const rawData = window.atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+
+  for (let i = 0; i < rawData.length; i++) {
+    outputArray[i] = rawData.charCodeAt(i);
+  }
+  return outputArray;
 }
 
 export function createCarousel(containerElement, options = {}) {

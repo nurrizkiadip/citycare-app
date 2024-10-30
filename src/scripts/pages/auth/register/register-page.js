@@ -71,8 +71,13 @@ export default class RegisterPage {
     });
   }
 
-  registeredSuccessfully() {
+  registeredSuccessfully(message) {
+    window.alert(message);
     window.location.hash = '/login';
+  }
+
+  registeredFailed(message) {
+    window.alert(message);
   }
 
   showLoading(selector) {

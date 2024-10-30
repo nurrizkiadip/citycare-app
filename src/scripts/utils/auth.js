@@ -7,8 +7,8 @@ export function getAccessToken() {
     return accessToken === 'null' || accessToken === 'undefined'
       ? null
       : accessToken;
-  } catch {
-    console.error('Gagal mendapatkan access token');
+  } catch (error) {
+    console.error('getAccessToken: error:', error);
     return null;
   }
 }
@@ -45,8 +45,8 @@ export function putAccessToken(token) {
   try {
     localStorage.setItem(CONFIG.ACCESS_TOKEN_KEY, token);
     return true;
-  } catch {
-    console.error('Gagal menyimpan access token');
+  } catch (error) {
+    console.error('putAccessToken: error:', error);
     return false;
   }
 }
@@ -55,8 +55,8 @@ export function getLogout() {
   try {
     localStorage.removeItem(CONFIG.ACCESS_TOKEN_KEY);
     return true;
-  } catch {
-    console.error('Gagal menyimpan menghapus access token');
+  } catch (error) {
+    console.error('getLogout: error:', error);
     return false;
   }
 }

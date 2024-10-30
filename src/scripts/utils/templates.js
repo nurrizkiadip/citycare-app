@@ -9,6 +9,7 @@ export function generateMainNavigationListTemplate() {
 
 export function generateUnauthenticatedNavigationListTemplate() {
   return `
+    <li id="push-notification-tools" class="push-notification-tools"></li>
     <li><a id="login-button" href="#/login">Login</a></li>
     <li><a id="register-button" href="#/register">Register</a></li>
   `;
@@ -16,8 +17,25 @@ export function generateUnauthenticatedNavigationListTemplate() {
 
 export function generateAuthenticatedNavigationListTemplate() {
   return `
+    <li id="push-notification-tools" class="push-notification-tools"></li>
     <li><a id="new-report-button" class="btn new-report-button" href="#/new">Buat Laporan <i class="fas fa-plus"></i></a></li>
     <li><a id="logout-button" class="logout-button" href="#/logout"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+  `;
+}
+
+export function generateSubscribeButtonTemplate() {
+  return `
+    <button id="subscribe-button" class="btn subscribe-button">
+      Subscribe <i class="fas fa-bell"></i>
+    </button>
+  `;
+}
+
+export function generateUnsubscribeButtonTemplate() {
+  return `
+    <button id="unsubscribe-button" class="btn unsubscribe-button">
+      Unsubscribe <i class="fas fa-bell-slash"></i>
+    </button>
   `;
 }
 
@@ -29,17 +47,35 @@ export function generateReportItemTemplate(report) {
         <div class="report-item__main">
           <h2 id="report-title" class="report-item__title">${report.title}</h2>
           <div class="report-item__more-info">
-            <div class="report-item__createdat"><i class="fas fa-calendar-alt"></i> ${showFormattedDate(report.createdAt, 'id-ID')}</div>
-            <div class="report-item__location"><i class="fas fa-map"></i> ${report.location.placeName}</div>
+            <div class="report-item__createdat">
+               <i class="fas fa-calendar-alt"></i> ${showFormattedDate(report.createdAt, 'id-ID')}
+            </div>
+            <div class="report-item__location">
+              <i class="fas fa-map"></i> ${report.location.placeName}
+            </div>
           </div>
         </div>
-        <div id="report-description" class="report-item__description">${report.description}</div>
-        <div class="report-item__more-info">
-          <div class="report-item__author">Dilaporkan oleh: ${report.userOwner.name}</div>
+        <div id="report-description" class="report-item__description">
+          ${report.description}
         </div>
-        <a class="btn report-item__read-more" href="#/reports/${report.id}">Selengkapnya <i class="fas fa-arrow-right"></i></a>
+        <div class="report-item__more-info">
+          <div class="report-item__author">
+            Dilaporkan oleh: ${report.reporter.name}
+          </div>
+        </div>
+        <a class="btn report-item__read-more" href="#/reports/${report.id}">
+          Selengkapnya <i class="fas fa-arrow-right"></i>
+        </a>
       </div>
     </div>
+  `;
+}
+
+export function generateSaveReportButtonTemplate() {
+  return `
+    <button id="report-detail-save" class="btn btn-transparent">
+      Simpan laporan <i class="far fa-bookmark"></i>
+    </button>
   `;
 }
 
@@ -51,10 +87,10 @@ export function generateRemoveReportButtonTemplate() {
   `;
 }
 
-export function generateSaveReportButtonTemplate() {
+export function generateNotifyMeButtonTemplate() {
   return `
-    <button id="report-detail-save" class="btn btn-transparent">
-      Simpan laporan <i class="far fa-bookmark"></i>
+    <button id="report-detail-notify-me" class="btn btn-transparent">
+      Try Notify Me <i class="far fa-bell"></i>
     </button>
   `;
 }
@@ -92,10 +128,16 @@ export function generateReportDetailImageTemplate(imageUrl = null, alt = '') {
 export function generateReportCommentItemTemplate(comment) {
   return `
     <article tabindex="0" class="report-detail__comment-item">
-      <img class="report-detail__comment-item__photo" src="${comment.userOwner.photoUrl}" alt="${comment.userOwner.name}">
+      <img
+        class="report-detail__comment-item__photo"
+        src="${comment.commenter.photoUrl}"
+        alt="${comment.commenter.name}"
+      >
       <div class="report-detail__comment-item__body">
         <div class="report-detail__comment-item__body__more-info">
-          <div class="report-detail__comment-item__author">${comment.userOwner.name}</div>
+          <div class="report-detail__comment-item__author">
+            ${comment.commenter.name}
+          </div>
         </div>
         <div class="report-detail__comment-item__text">${comment.body}</div>
       </div>

@@ -61,8 +61,13 @@ export default class LoginPage {
     });
   }
 
-  loginSuccessfully() {
+  loginSuccessfully(message) {
+    window.alert(message);
     window.location.hash = '/';
+  }
+
+  loginFailed(message) {
+    window.alert(message);
   }
 
   showLoading(selector) {

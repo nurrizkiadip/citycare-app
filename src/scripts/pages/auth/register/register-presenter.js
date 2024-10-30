@@ -8,14 +8,18 @@ class RegisterPresenter {
   async getRegistered({ name, email, password }) {
     this._view.showLoading('#loader');
     try {
-      // eslint-disable-next-line no-unused-vars
       const response = await getRegistered({ name, email, password });
 
-      this._view.registeredSuccessfully();
-      return true;
+      if (!response.ok) {
+        console.error('getRegistered: response:', response);
+        this._view.registeredFailed(response.message);
+        return;
+      }
+
+      this._view.registeredSuccessfully(response.message, response.data);
     } catch (error) {
-      console.error('Something went error:', error);
-      return false;
+      console.error('getRegistered: error:', error);
+      this._view.registeredFailed(error.message);
     } finally {
       this._view.hideLoading('#loader');
     }
