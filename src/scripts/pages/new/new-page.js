@@ -242,6 +242,10 @@ export default class NewPage {
       canvas,
     });
 
+    /**
+     * review:
+     * Butuh await kah?
+     */
     this._camera.launch();
 
     this._camera.addCheeseButtonListener('#new-form-camera-take', async () => {
@@ -295,6 +299,10 @@ export default class NewPage {
 
   _removePicture(id) {
     const selectedPicture = this._takenDocumentations.find((picture) => {
+      /**
+       * review:
+       * Mengapa tidak pakai ===?
+       */
       return picture.id == id;
     });
 
