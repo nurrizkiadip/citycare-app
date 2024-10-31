@@ -3,10 +3,19 @@ import { putAccessToken } from '../../../utils/auth';
 
 class LoginPresenter {
   constructor(view) {
+    /**
+     * review:
+     * kenapa tidak mulai mengajarkan syntax baru # untuk private property?
+     */
     this._view = view;
   }
 
   async getLogin({ email, password }) {
+    /**
+     * review:
+     * seharusnya presenter tidak tahu menahu hal yang berhubungan dengan interface
+     * sehingga menetapkan selector loader sebaiknya tidak dilakukan di presenter
+     */
     this._view.showLoading('#loader');
     try {
       const response = await getLogin({ email, password });

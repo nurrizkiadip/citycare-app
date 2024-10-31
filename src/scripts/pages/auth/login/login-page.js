@@ -1,6 +1,10 @@
 import { LoginPresenter } from './login-presenter';
 
 export default class LoginPage {
+  /**
+   * review:
+   * kenapa tidak mulai mengajarkan syntax baru # untuk private property?
+   */
   _presenter = null;
   _form = null;
 
@@ -70,11 +74,21 @@ export default class LoginPage {
     window.alert(message);
   }
 
+  /**
+   * review:
+   * mengapa tidak langsung menulis #loader secara langsung, melainkan melalui argumen selector?
+   * Berarti presenter yang akan kirim nilainya? Tapi kenapa presenter mengurusi selector yang erat dengan spesifik view.
+   */
   showLoading(selector) {
     const loader = document.querySelector(selector);
     loader.style.display = 'block';
   }
 
+  /**
+   * review:
+   * mengapa tidak langsung menulis #loader secara langsung, melainkan melalui argumen selector?
+   * Berarti presenter yang akan kirim nilainya? Tapi kenapa presenter mengurusi selector yang erat dengan spesifik view.
+   */
   hideLoading(selector) {
     const loader = document.querySelector(selector);
     loader.style.display = 'none';
