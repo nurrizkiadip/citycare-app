@@ -17,6 +17,13 @@ export class HomePresenter {
         return;
       }
 
+      /**
+       * review:
+       * agak sulit untuk dibaca, gimana kalo diekstrak ke fungsi terpisah?
+       * Jadi harapannya bisa seperti ini
+       *
+       * const reports = await Promise.all(response.data.map(mapRawReportToReport))
+       */
       const reportsPromises = response.data.map(async (report) => ({
         ...report,
         location: {
