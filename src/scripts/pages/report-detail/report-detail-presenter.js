@@ -38,6 +38,10 @@ class ReportDetailPresenter {
         },
       };
 
+      /**
+       * review:
+       * missing await?
+       */
       this._view.populateReportDetail(response.message, report);
     } catch (error) {
       console.error('getReportDetail: error:', error);
@@ -72,6 +76,10 @@ class ReportDetailPresenter {
         return;
       }
 
+      /**
+       * review:
+       * missing await?
+       */
       this.notifyReportOwner(response.data.id);
       this._view.postNewCommentSuccessfully(response.message, response.data);
     } catch (error) {
