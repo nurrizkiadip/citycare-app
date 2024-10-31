@@ -57,6 +57,10 @@ export async function getLogin({ email, password }) {
   };
 }
 
+/**
+ * review:
+ * fungsi ini tidak digunakan?
+ */
 export async function getMyUserInfo() {
   const accessToken = getAccessToken();
 
@@ -220,6 +224,11 @@ export async function sendReportToMeViaNotification(reportId) {
     ok: fetchResponse.ok,
   };
 }
+
+/**
+ * review:
+ * fungsi ini tidak digunakan?
+ */
 
 export async function sendReportToUserViaNotification(reportId, { userId }) {
   const accessToken = getAccessToken();
