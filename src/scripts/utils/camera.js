@@ -45,6 +45,11 @@ export default class Camera {
         const option = document.createElement('option');
         option.value = device.deviceId;
         option.text = device.label || `Camera ${this._selectCameraElement.length + 1}`;
+        /**
+         * review:
+         * sebelum append camera option lainnya, `_selectCameraElement` perlu di clear dulu
+         * karena sekarang ada bugs di mana kamera ditutup terus dibuka kembali opsinya jadi banyak (double-double)
+         */
         this._selectCameraElement.appendChild(option);
       });
     } catch (error) {
