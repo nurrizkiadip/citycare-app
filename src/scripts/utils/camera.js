@@ -35,6 +35,9 @@ export default class Camera {
   }
 
   async _populateCameraList() {
+    // make sure _selectCameraElement is empty before populating it with camera options
+    this._selectCameraElement.innerHTML = '';
+
     try {
       const enumeratedDevices = await navigator.mediaDevices.enumerateDevices();
       const cameraList = enumeratedDevices.filter((device) => {
