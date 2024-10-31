@@ -109,6 +109,10 @@ export default class ReportDetailPage {
       throw new Error('reports must be an object');
     }
 
+    /**
+     * review:
+     * missing await?
+     */
     this._presenter.renderBookmarkButton(report);
     this.renderNotifyMeButton();
 
@@ -233,6 +237,10 @@ export default class ReportDetailPage {
     console.log('Success storing new comment');
 
     this.clearForm();
+    /**
+     * review:
+     * missing await?
+     */
     this._presenter.getCommentsList();
   }
 

@@ -66,6 +66,10 @@ export default class RegisterPage {
         password: password.value,
       };
 
+      /**
+       * review:
+       * jangan lupa dihapus karena email dan password akan terlihat
+       */
       window.alert(JSON.stringify(body));
       await this._presenter.getRegistered(body);
     });

@@ -30,7 +30,18 @@ export default class HomePage {
     await this._presenter.getReports();
   }
 
+  /**
+   * review:
+   * Mengapa fungsi ini perlu `async`? Sepertinya tidak ada penggunaan await di dalamnya.
+   */
   async populateReportsList(message, reports) {
+    /**
+     * review:
+     * Apakah bisa reproduce skenario `reports` bukan array?
+     * Kalo dilihat dari kode di presenter, harusnya reports tidak akan bernilai selain array.
+     *
+     * Jadi validasi di sini sebetulnya useless loh.
+     */
     if (!Array.isArray(reports)) {
       throw new Error('reports must be an array');
     }
