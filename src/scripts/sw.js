@@ -1,47 +1,38 @@
 import { precacheAndRoute } from 'workbox-precaching';
-import { registerRoute, Route } from 'workbox-routing';
+import { registerRoute } from 'workbox-routing';
 import { CacheFirst, StaleWhileRevalidate } from 'workbox-strategies';
+import { BASE_URL } from './config';
 
 // Do precaching
 const manifest = self.__WB_MANIFEST;
 precacheAndRoute(manifest);
 
-registerRoute(new Route(
+registerRoute(
   ({ request }) => {
     return request.destination === 'font';
   },
   new CacheFirst({
     cacheName: 'fonts',
   }),
-));
+);
 
-registerRoute(new Route(
-  ({ url }) => {
-    return url.href.endsWith('.json');
-  },
-  new StaleWhileRevalidate({
-    cacheName: 'json',
-  }),
-));
-
-const BASE_URL = 'https://citycare-api.dicoding.dev/v1';
-registerRoute(new Route(
+registerRoute(
   ({ url }) => {
     return url.href.startsWith(BASE_URL);
   },
   new StaleWhileRevalidate({
     cacheName: 'api',
   }),
-));
+);
 
-registerRoute(new Route(
+registerRoute(
   ({ request, url }) => {
-    return request.destination === 'image' && !url.href.startsWith('https://tile.openstreetmap.org');
+    return request.destination === 'image' && url.href.startsWith(BASE_URL);
   },
   new StaleWhileRevalidate({
     cacheName: 'images',
   }),
-));
+);
 
 self.addEventListener('push', (event) => {
   const chainPromise = async () => {

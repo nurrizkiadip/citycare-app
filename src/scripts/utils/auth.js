@@ -1,49 +1,24 @@
-import { parseAndCombineActiveUrl } from '../routes/url-parser';
-import CONFIG from '../config';
+import { getActiveRoute } from '../routes/url-parser';
+import { ACCESS_TOKEN_KEY } from '../config';
 
 export function getAccessToken() {
   try {
-    const accessToken = localStorage.getItem(CONFIG.ACCESS_TOKEN_KEY);
-    return accessToken === 'null' || accessToken === 'undefined'
-      ? null
-      : accessToken;
+    const accessToken = localStorage.getItem(ACCESS_TOKEN_KEY);
+
+    if (accessToken === 'null' || accessToken === 'undefined') {
+      return null;
+    }
+
+    return accessToken;
   } catch (error) {
     console.error('getAccessToken: error:', error);
     return null;
   }
 }
 
-const unauthenticatedRoutesOnly = [
-  '/login',
-  '/register',
-];
-
-export function checkUnauthenticatedRouteOnly(callback) {
-  const url = parseAndCombineActiveUrl();
-  const isLogin = !!getAccessToken();
-
-  if (unauthenticatedRoutesOnly.includes(url) && isLogin) {
-    window.location.hash = '/';
-    return null;
-  }
-
-  return callback;
-}
-
-export function checkAuthenticatedRoute(callback) {
-  const isLogin = !!getAccessToken();
-
-  if (!isLogin) {
-    window.location.hash = '/login';
-    return null;
-  }
-
-  return callback;
-}
-
 export function putAccessToken(token) {
   try {
-    localStorage.setItem(CONFIG.ACCESS_TOKEN_KEY, token);
+    localStorage.setItem(ACCESS_TOKEN_KEY, token);
     return true;
   } catch (error) {
     console.error('putAccessToken: error:', error);
@@ -51,12 +26,41 @@ export function putAccessToken(token) {
   }
 }
 
-export function getLogout() {
+export function removeAccessToken() {
   try {
-    localStorage.removeItem(CONFIG.ACCESS_TOKEN_KEY);
+    localStorage.removeItem(ACCESS_TOKEN_KEY);
     return true;
   } catch (error) {
     console.error('getLogout: error:', error);
     return false;
   }
+}
+
+const unauthenticatedRoutesOnly = ['/login', '/register'];
+
+export function checkUnauthenticatedRouteOnly(page) {
+  const url = getActiveRoute();
+  const isLogin = !!getAccessToken();
+
+  if (unauthenticatedRoutesOnly.includes(url) && isLogin) {
+    location.hash = '/';
+    return null;
+  }
+
+  return page;
+}
+
+export function checkAuthenticatedRoute(page) {
+  const isLogin = !!getAccessToken();
+
+  if (!isLogin) {
+    location.hash = '/login';
+    return null;
+  }
+
+  return page;
+}
+
+export function getLogout() {
+  removeAccessToken();
 }

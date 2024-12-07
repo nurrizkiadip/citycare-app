@@ -1,4 +1,4 @@
-function extractUrlSegments(path) {
+function extractPathnameSegments(path) {
   const splitUrl = path.split('/');
 
   return {
@@ -7,36 +7,40 @@ function extractUrlSegments(path) {
   };
 }
 
-function combineUrlSegments(pathSegments) {
-  let url = '';
+function constructRouteFromSegments(pathSegments) {
+  let pathname = '';
 
   if (pathSegments.resource) {
-    url = url.concat(`/${pathSegments.resource}`);
+    pathname = pathname.concat(`/${pathSegments.resource}`);
   }
 
   if (pathSegments.id) {
-    url = url.concat('/:id');
+    pathname = pathname.concat('/:id');
   }
 
-  return url || '/';
+  return pathname || '/';
 }
 
-export function parseAndCombineActiveUrl() {
-  const pathname = window.location.hash.slice(1);
-  const urlSegments = extractUrlSegments(pathname);
-  return combineUrlSegments(urlSegments);
+export function getActivePathname() {
+  return location.hash.replace('#', '') || '/';
 }
 
-export function parseActiveUrl() {
-  const pathname = window.location.hash.slice(1);
-  return extractUrlSegments(pathname);
+export function getActiveRoute() {
+  const pathname = getActivePathname();
+  const urlSegments = extractPathnameSegments(pathname);
+  return constructRouteFromSegments(urlSegments);
 }
 
-export function parseAndCombineUrl(pathname) {
-  const urlSegments = extractUrlSegments(pathname);
-  return combineUrlSegments(urlSegments);
+export function parseActivePathname() {
+  const pathname = getActivePathname();
+  return extractPathnameSegments(pathname);
 }
 
-export function parseUrl(pathname) {
-  return extractUrlSegments(pathname);
+export function getRoute(pathname) {
+  const urlSegments = extractPathnameSegments(pathname);
+  return constructRouteFromSegments(urlSegments);
+}
+
+export function parsePathname(pathname) {
+  return extractPathnameSegments(pathname);
 }

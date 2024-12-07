@@ -3,36 +3,37 @@ import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 import { getCurrentPosition } from './index';
-import { MaptilerLayer, MaptilerStyle } from '@maptiler/leaflet-maptilersdk';
+import { MaptilerLayer } from '@maptiler/leaflet-maptilersdk';
 import { GeocodingControl } from '@maptiler/geocoding-control/leaflet';
-import CONFIG from '../config';
+import { MAP_SERVICE_API_KEY } from '../config';
 
 export default class Leaflet {
-  _element = null;
-  _map = null;
+  #container = null;
+  #map = null;
 
-  _layerControls = null;
+  #layerControls = null;
 
   constructor(selector, options = {}) {
-    this._element = document.querySelector(selector);
+    this.#container = document.querySelector(selector);
 
     const baseLayer = tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      attribution:
+        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
     });
 
-    this._map = map(this._element, {
+    this.#map = map(this.#container, {
       zoom: 5,
       scrollWheelZoom: false,
       layers: [baseLayer],
       ...options,
     });
 
-    const baseLayers = { 'OpenStreetMap': baseLayer };
+    const baseLayers = { OpenStreetMap: baseLayer };
     const overlays = {};
-    this._layerControls = control.layers(baseLayers, overlays, {
+    this.#layerControls = control.layers(baseLayers, overlays, {
       position: 'topleft',
     });
-    this._layerControls.addTo(this._map);
+    this.#layerControls.addTo(this.#map);
   }
 
   /**
@@ -54,9 +55,8 @@ export default class Leaflet {
       });
     } catch (error) {
       console.error('build: error:', error);
-      window.alert(error.message);
 
-      const coordinate = [-6.200000, 106.816666];
+      const coordinate = [-6.2, 106.816666];
 
       return new Leaflet(selector, {
         ...options,
@@ -66,31 +66,35 @@ export default class Leaflet {
   }
 
   static async getPlaceNameByCoordinate(latitude, longitude) {
-    const url = `https://api.maptiler.com/geocoding/${longitude},${latitude}.json?key=${CONFIG.MAP_SERVICE_API_KEY}`;
-
     try {
+      const url = `https://api.maptiler.com/geocoding/${longitude},${latitude}.json?key=${MAP_SERVICE_API_KEY}&language=id&limit=1`;
       const response = await fetch(url);
       const json = await response.json();
-      const place = json.features[0].place_name_id.split(', ');
+
+      const place = json.features[0].place_name.split(', ');
       return [place.at(-2), place.at(-1)].map((name) => name).join(', ');
     } catch (error) {
       console.error('getPlaceNameByCoordinate: error:', error);
-      return `${latitude},${longitude}`;
+      return `${latitude}, ${longitude}`;
     }
   }
 
   changeCamera(coordinate, zoomLevel = undefined) {
-    this._map.setView(coordinate, zoomLevel);
+    this.#map.setView(coordinate, zoomLevel);
   }
 
   getCenter() {
-    const { lat, lng } = this._map.getCenter();
+    const { lat, lng } = this.#map.getCenter();
     return [lat, lng];
   }
 
   addMapTilerGeocoding(options = {}) {
+    if (typeof options !== 'object') {
+      throw new Error('options must be an object');
+    }
+
     const geocoderControl = new GeocodingControl({
-      apiKey: CONFIG.MAP_SERVICE_API_KEY,
+      apiKey: MAP_SERVICE_API_KEY,
       zoom: 15,
       flyTo: true,
       keepOpen: false,
@@ -99,7 +103,7 @@ export default class Leaflet {
       ...options,
     });
 
-    geocoderControl.addTo(this._map);
+    geocoderControl.addTo(this.#map);
   }
 
   createIcon(options = {}) {
@@ -136,7 +140,7 @@ export default class Leaflet {
       newMarker.bindPopup(newPopup);
     }
 
-    newMarker.addTo(this._map);
+    newMarker.addTo(this.#map);
     return newMarker;
   }
 
@@ -145,20 +149,22 @@ export default class Leaflet {
   }
 
   addMapEventListener(eventName, callback) {
-    this._map.on(eventName, callback);
+    this.#map.on(eventName, callback);
   }
 
   addNewRasterTile(name, url, options = {}) {
-    const tile = tileLayer(url, options);
-    this._layerControls.addBaseLayer(tile, name);
+    const rasterUrl = new URL(url);
+    rasterUrl.searchParams.set('key', MAP_SERVICE_API_KEY);
+
+    const tile = tileLayer(rasterUrl.href, options);
+    this.#layerControls.addBaseLayer(tile, name);
   }
 
-  addMaptilerTile(name, options = {}) {
+  addMaptilerTile(name, style, options = {}) {
     const maptiler = new MaptilerLayer({
-      apiKey: CONFIG.MAP_SERVICE_API_KEY,
-      style: MaptilerStyle.STREETS,
+      apiKey: MAP_SERVICE_API_KEY,
       ...options,
     });
-    this._layerControls.addBaseLayer(maptiler, name);
+    this.#layerControls.addBaseLayer(maptiler, name);
   }
 }

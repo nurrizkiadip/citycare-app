@@ -8,10 +8,7 @@ module.exports = merge(common, {
     rules: [
       {
         test: /\.css$/,
-        use: [
-          'style-loader',
-          'css-loader',
-        ],
+        use: ['style-loader', 'css-loader'],
       },
     ],
   },
@@ -20,8 +17,8 @@ module.exports = merge(common, {
     port: 9000,
     client: {
       overlay: {
-        errors: true,
-        warnings: true,
+        errors: false,
+        warnings: false,
       },
     },
   },

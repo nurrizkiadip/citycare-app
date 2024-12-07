@@ -1,82 +1,85 @@
-import { LoginPresenter } from './login-presenter';
+import LoginPresenter from './login-presenter';
+import * as CityCareAPI from '../../../data/api';
+import * as AuthModel from '../../../utils/auth';
 
 export default class LoginPage {
-  _presenter = null;
-  _form = null;
+  #presenter = null;
 
-  render() {
+  async render() {
     return `
       <section class="login-container">
-        <div class="login-form-container">
-          <h2 class="login__title">Masuk akun</h2>
-          <div id="loader" class="loader"></div>
+        <article class="login-form-container">
+          <h1 class="login__title">Masuk akun</h1>
 
           <form id="login-form" class="login-form">
             <div class="form-control">
-              <label for="login-form-email-input" class="login-form__email-title">Email</label>
+              <label for="email-input" class="login-form__email-title">Email</label>
 
               <div class="login-form__title-container">
-                <input id="login-form-email-input" type="email" name="email" placeholder="Contoh: nama@email.com">
+                <input id="email-input" type="email" name="email" placeholder="Contoh: nama@email.com">
               </div>
             </div>
             <div class="form-control">
-              <label for="login-form-password-input" class="login-form__password-title">Password</label>
+              <label for="password-input" class="login-form__password-title">Password</label>
 
               <div class="login-form__title-container">
-                <input id="login-form-password-input" type="password" name="password" placeholder="Masukkan password Anda">
+                <input id="password-input" type="password" name="password" placeholder="Masukkan password Anda">
               </div>
             </div>
             <div class="form-buttons login-form__form-buttons">
-              <button class="btn" type="submit">Masuk</button>
+              <div id="submit-button-container">
+                <button class="btn" type="submit">Masuk</button>
+              </div>
               <p class="login-form__do-not-have-account">Belum punya akun? <a href="#/register">Daftar</a></p>
             </div>
           </form>
-        </div>
+        </article>
       </section>
     `;
   }
 
   async afterRender() {
-    this.hideLoading('#loader');
+    this.#presenter = new LoginPresenter({
+      view: this,
+      model: CityCareAPI,
+      authModel: AuthModel,
+    });
 
-    this._form = document.getElementById('login-form');
-    this._presenter = new LoginPresenter(this);
-
-    await this._setupForm();
+    this.#setupForm();
   }
 
-  async _setupForm() {
-    const email = this._form.elements.namedItem('email');
-    const password = this._form.elements.namedItem('password');
-
-    this._form.addEventListener('submit', async (event) => {
+  #setupForm() {
+    document.getElementById('login-form').addEventListener('submit', async (event) => {
       event.preventDefault();
 
-      const body = {
-        email: email.value,
-        password: password.value,
+      const data = {
+        email: document.getElementById('email-input').value,
+        password: document.getElementById('password-input').value,
       };
-
-      await this._presenter.getLogin(body);
+      await this.#presenter.getLogin(data);
     });
   }
 
   loginSuccessfully(message) {
-    window.alert(message);
-    window.location.hash = '/';
+    alert(message);
+    location.hash = '/';
   }
 
   loginFailed(message) {
-    window.alert(message);
+    alert(message);
   }
 
-  showLoading(selector) {
-    const loader = document.querySelector(selector);
-    loader.style.display = 'block';
+  showSubmitLoadingButton() {
+    document.getElementById('submit-button-container').innerHTML = `
+      <button class="btn" type="submit" disabled>
+        <i class="fas fa-spinner loader-button"></i> Masuk
+      </button>
+    `;
   }
 
-  hideLoading(selector) {
-    const loader = document.querySelector(selector);
-    loader.style.display = 'none';
+  hideSubmitLoadingButton() {
+    document.getElementById('submit-button-container').innerHTML = `
+      <button class="btn" type="submit">Masuk</button>
+    `;
   }
 }

@@ -1,91 +1,90 @@
-import {
-  getAllCommentsByReportId,
-  getReportById, sendCommentToReportOwnerViaNotification, sendReportToMeViaNotification,
-  storeNewCommentByReportId,
-} from '../../data/api';
-import {
-  getReportById as getSavedReportById,
-  putReport,
-  removeReport,
-} from '../../data/database';
-import Leaflet from '../../utils/leaflet';
+import { reportMapper } from '../../data/api-mapper';
 
-class ReportDetailPresenter {
-  _reportId = null;
+export default class ReportDetailPresenter {
+  #reportId;
+  #view;
+  #apiModel;
+  #dbModel;
 
-  constructor(view, reportId) {
-    this._view = view;
-    this._reportId = reportId;
+  constructor(reportId, { view, apiModel, dbModel }) {
+    this.#reportId = reportId;
+    this.#view = view;
+    this.#apiModel = apiModel;
+    this.#dbModel = dbModel;
   }
 
-  async getReportDetail() {
-    this._view.showLoading('#report-detail-loader');
+  async showReportDetailMap() {
+    this.#view.showMapLoading();
     try {
-      const response = await getReportById(this._reportId);
+      await this.#view.initialMap();
+    } catch (error) {
+      console.error('showReportDetailMap: error:', error);
+    } finally {
+      this.#view.hideMapLoading();
+    }
+  }
+
+  async showReportDetail() {
+    this.#view.showReportDetailLoading();
+    try {
+      const response = await this.#apiModel.getReportById(this.#reportId);
 
       if (!response.ok) {
-        console.error('getReportDetail: response:', response);
-        this._view.populateReportDetailError(response.message);
+        console.error('showReportDetailAndMap: response:', response);
+        this.#view.populateReportDetailError(response.message);
         return;
       }
 
-      const { latitude, longitude } = response.data.location;
-      const report = {
-        ...response.data,
-        location: {
-          ...response.data.location,
-          placeName: await Leaflet.getPlaceNameByCoordinate(latitude, longitude),
-        },
-      };
-
-      this._view.populateReportDetail(response.message, report);
+      const report = await reportMapper(response.data);
+      this.#view.populateReportDetailAndInitialMap(response.message, report);
     } catch (error) {
-      console.error('getReportDetail: error:', error);
-      this._view.populateReportDetailError(error.message);
+      console.error('showReportDetailAndMap: error:', error);
+      this.#view.populateReportDetailError(error.message);
     } finally {
-      this._view.hideLoading('#report-detail-loader');
+      this.#view.hideReportDetailLoading();
     }
   }
 
   async getCommentsList() {
-    this._view.showLoading('#report-detail-comments-list-loader');
+    this.#view.showCommentsLoading();
     try {
-      const response = await getAllCommentsByReportId(this._reportId);
-      this._view.populateReportDetailComments(response.message, response.data);
+      const response = await this.#apiModel.getAllCommentsByReportId(this.#reportId);
+      this.#view.populateReportDetailComments(response.message, response.data);
     } catch (error) {
       console.error('getCommentsList: error:', error);
-      this._view.populateCommentsListError(error.message);
+      this.#view.populateCommentsListError(error.message);
     } finally {
-      this._view.hideLoading('#report-detail-comments-list-loader');
+      this.#view.hideCommentsLoading();
     }
   }
 
   async postNewComment({ body }) {
-    this._view.disableCommentSubmit();
-    this._view.showLoading('#report-detail-comments-form-loader');
+    this.#view.showSubmitLoadingButton();
     try {
-      const response = await storeNewCommentByReportId(this._reportId, { body });
+      const response = await this.#apiModel.storeNewCommentByReportId(this.#reportId, { body });
 
       if (!response.ok) {
         console.error('postNewComment: response:', response);
-        this._view.postNewCommentFailed(response.message);
+        this.#view.postNewCommentFailed(response.message);
         return;
       }
 
       this.notifyReportOwner(response.data.id);
-      this._view.postNewCommentSuccessfully(response.message, response.data);
+      this.#view.postNewCommentSuccessfully(response.message, response.data);
     } catch (error) {
       console.error('postNewComment: error:', error);
-      this._view.postNewCommentFailed(error.message);
+      this.#view.postNewCommentFailed(error.message);
     } finally {
-      this._view.enableCommentSubmit();
-      this._view.hideLoading('#report-detail-comments-form-loader');
+      this.#view.hideSubmitLoadingButton();
     }
   }
 
   async notifyReportOwner(commentId) {
     try {
-      const response = await sendCommentToReportOwnerViaNotification(this._reportId, commentId);
+      const response = await this.#apiModel.sendCommentToReportOwnerViaNotification(
+        this.#reportId,
+        commentId,
+      );
 
       if (!response.ok) {
         console.error('notifyReportOwner: response:', response);
@@ -100,7 +99,7 @@ class ReportDetailPresenter {
 
   async notifyMe() {
     try {
-      const response = await sendReportToMeViaNotification(this._reportId);
+      const response = await this.#apiModel.sendReportToMeViaNotification(this.#reportId);
 
       if (!response.ok) {
         console.error('notifyMe: response:', response);
@@ -113,43 +112,39 @@ class ReportDetailPresenter {
     }
   }
 
-  async saveReport({ id, title, damageLevel, description, evidenceImages, location, reporter, createdAt, updatedAt }) {
+  async saveReport() {
     try {
-      const data = {
-        id, title, damageLevel, description,
-        evidenceImages, location, reporter,
-        createdAt, updatedAt,
-      };
-      await putReport(data);
-      this._view.saveToBookmarkSuccessfully('Success to save to bookmark');
+      const report = await this.#apiModel.getReportById(this.#reportId);
+      await this.#dbModel.putReport(report.data);
+
+      this.#view.saveToBookmarkSuccessfully('Success to save to bookmark');
     } catch (error) {
       console.error('saveReport: error:', error);
-      this._view.saveToBookmarkFailed(error.message);
+      this.#view.saveToBookmarkFailed(error.message);
     }
   }
 
-  async removeReport(reportId) {
+  async removeReport() {
     try {
-      await removeReport(reportId);
-      this._view.removeFromBookmarkSuccessfully('Success to remove from bookmark');
+      await this.#dbModel.removeReport(this.#reportId);
+
+      this.#view.removeFromBookmarkSuccessfully('Success to remove from bookmark');
     } catch (error) {
       console.error('removeReport: error:', error);
-      this._view.removeFromBookmarkFailed(error.message);
+      this.#view.removeFromBookmarkFailed(error.message);
     }
   }
 
-  async renderBookmarkButton(report) {
-    if (await this._isReportExist(report.id)) {
-      await this._view.renderRemoveButton(report);
+  async showSaveButton() {
+    if (await this.#isReportSaved()) {
+      this.#view.renderRemoveButton();
       return;
     }
 
-    await this._view.renderSaveButton(report);
+    this.#view.renderSaveButton();
   }
 
-  async _isReportExist(id) {
-    return !!(await getSavedReportById(id));
+  async #isReportSaved() {
+    return !!(await this.#dbModel.getReportById(this.#reportId));
   }
 }
-
-export { ReportDetailPresenter };

@@ -98,9 +98,9 @@
 	],
   "shortcuts": [
     {
-      "name": "Buat Laporan",
-      "short_name": "Buat",
-      "description": "Langsung buat laporan kerusakan baru dengan cepat.",
+      "name": "Laporan Baru",
+      "short_name": "Baru",
+      "description": "Membuat laporan kerusakan baru.",
       "url": "/?source=pwa#/new",
       "icons": [
         {
@@ -113,7 +113,7 @@
     {
       "name": "Laporan Tersimpan",
       "short_name": "Tersimpan",
-      "description": "Akses daftar laporan yang telah kamu buat sebelumnya.",
+      "description": "Lihat daftar laporan tersimpan.",
       "url": "/?source=pwa#/bookmark",
       "icons": [
         {

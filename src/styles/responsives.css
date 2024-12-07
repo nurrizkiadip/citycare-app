@@ -1,3 +1,27 @@
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes slide-to-left {
+  to {
+    transform: translateX(-30px);
+  }
+}
+
+@keyframes slide-from-right {
+  from {
+    transform: translateX(30px);
+  }
+}
+
 @media (prefers-reduced-motion) {
   ::view-transition-group(*),
   ::view-transition-old(*),
@@ -52,8 +76,9 @@
 
 @media screen and (width > 800px) {
   /* MAIN */
-  .reports-map {
-    min-height: 500px;
+  .reports-list__map__container,
+  .reports-list__map {
+    height: 500px;
   }
 
   .reports-list {
@@ -113,8 +138,9 @@
   }
 
   /* MAIN */
-  .reports-map {
-    min-height: 600px;
+  .reports-list__map__container,
+  .reports-list__map {
+    height: 600px;
   }
 
   .reports-list {

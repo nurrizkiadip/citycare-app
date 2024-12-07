@@ -1,40 +1,41 @@
-import { RegisterPresenter } from './register-presenter';
+import RegisterPresenter from './register-presenter';
+import * as CityCareAPI from '../../../data/api';
 
 export default class RegisterPage {
-  _presenter = null;
-  _form = null;
+  #presenter = null;
 
-  render() {
+  async render() {
     return `
       <section class="register-container">
         <div class="register-form-container">
-          <h2 class="register__title">Daftar akun</h2>
-          <div id="loader" class="loader"></div>
+          <h1 class="register__title">Daftar akun</h1>
 
           <form id="register-form" class="register-form">
             <div class="form-control">
-              <label for="register-form-name-input" class="register-form__name-title">Nama lengkap</label>
+              <label for="name-input" class="register-form__name-title">Nama lengkap</label>
 
               <div class="register-form__title-container">
-                <input id="register-form-name-input" type="text" name="name" placeholder="Masukkan nama lengkap Anda">
+                <input id="name-input" type="text" name="name" placeholder="Masukkan nama lengkap Anda">
               </div>
             </div>
             <div class="form-control">
-              <label for="register-form-email-input" class="register-form__email-title">Email</label>
+              <label for="email-input" class="register-form__email-title">Email</label>
 
               <div class="register-form__title-container">
-                <input id="register-form-email-input" type="email" name="email" placeholder="Contoh: nama@email.com">
+                <input id="email-input" type="email" name="email" placeholder="Contoh: nama@email.com">
               </div>
             </div>
             <div class="form-control">
-              <label for="register-form-password-input" class="register-form__password-title">Password</label>
+              <label for="password-input" class="register-form__password-title">Password</label>
 
               <div class="register-form__title-container">
-                <input id="register-form-password-input" type="password" name="password" placeholder="Masukkan password baru">
+                <input id="password-input" type="password" name="password" placeholder="Masukkan password baru">
               </div>
             </div>
             <div class="form-buttons register-form__form-buttons">
-              <button class="btn" type="submit">Daftar akun</button>
+              <div id="submit-button-container">
+                <button class="btn" type="submit">Daftar akun</button>
+              </div>
               <p class="register-form__already-have-account">Sudah punya akun? <a href="#/login">Masuk</a></p>
             </div>
           </form>
@@ -44,49 +45,47 @@ export default class RegisterPage {
   }
 
   async afterRender() {
-    this.hideLoading('#loader');
+    this.#presenter = new RegisterPresenter({
+      view: this,
+      model: CityCareAPI,
+    });
 
-    this._form = document.getElementById('register-form');
-    this._presenter = new RegisterPresenter(this);
-
-    await this._setupForm();
+    this.#setupForm();
   }
 
-  async _setupForm() {
-    const name = this._form.elements.namedItem('name');
-    const email = this._form.elements.namedItem('email');
-    const password = this._form.elements.namedItem('password');
-
-    this._form.addEventListener('submit', async (event) => {
+  #setupForm() {
+    document.getElementById('register-form').addEventListener('submit', async (event) => {
       event.preventDefault();
 
-      const body = {
-        name: name.value,
-        email: email.value,
-        password: password.value,
+      const data = {
+        name: document.getElementById('name-input').value,
+        email: document.getElementById('email-input').value,
+        password: document.getElementById('password-input').value,
       };
-
-      window.alert(JSON.stringify(body));
-      await this._presenter.getRegistered(body);
+      await this.#presenter.getRegistered(data);
     });
   }
 
   registeredSuccessfully(message) {
-    window.alert(message);
-    window.location.hash = '/login';
+    alert(message);
+    location.hash = '/login';
   }
 
   registeredFailed(message) {
-    window.alert(message);
+    alert(message);
   }
 
-  showLoading(selector) {
-    const loader = document.querySelector(selector);
-    loader.style.display = 'block';
+  showSubmitLoadingButton() {
+    document.getElementById('submit-button-container').innerHTML = `
+      <button class="btn" type="submit" disabled>
+        <i class="fas fa-spinner loader-button"></i> Daftar akun
+      </button>
+    `;
   }
 
-  hideLoading(selector) {
-    const loader = document.querySelector(selector);
-    loader.style.display = 'none';
+  hideSubmitLoadingButton() {
+    document.getElementById('submit-button-container').innerHTML = `
+      <button class="btn" type="submit">Daftar akun</button>
+    `;
   }
 }

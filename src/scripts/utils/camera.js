@@ -1,93 +1,96 @@
 export default class Camera {
-  _width = 320;
-  _height = 0;
+  #width = 320;
+  #height = 0;
 
-  _cameraContainer = null;
-  _selectCameraElement = null;
-  _videoElement = null;
-  _canvasElement = null;
+  #cameraContainer = null;
+  #selectCameraElement = null;
+  #videoElement = null;
+  #canvasElement = null;
 
-  _cheeseButtonElement = null;
-  _cheeseButtonHandler = null;
+  #cheeseButtonElement = null;
+  #cheeseButtonHandler = null;
 
-  _currentStream = null;
-  _streaming = false;
+  #currentStream = null;
+  #streaming = false;
 
   static isMediaDevicesAvailable() {
     return 'mediaDevices' in navigator;
   }
 
-  constructor({ cameraContainer, cameraList, video, canvas, options = {} }) {
-    this._cameraContainer = cameraContainer;
-    this._selectCameraElement = cameraList;
-    this._videoElement = video;
-    this._canvasElement = canvas;
+  constructor({ cameraContainer, cameraList: cameraSelect, video, canvas, options = {} }) {
+    this.#cameraContainer = cameraContainer;
+    this.#selectCameraElement = cameraSelect;
+    this.#videoElement = video;
+    this.#canvasElement = canvas;
 
     if (Object.hasOwn(options, 'width')) {
-      this._width = options.width;
+      this.#width = options.width;
     }
     if (Object.hasOwn(options, 'height')) {
-      this._height = options.height;
+      this.#height = options.height;
     }
 
-    this._populateCameraList();
-    this._initialListener();
+    this.#initialListener();
   }
 
-  async _populateCameraList() {
+  async #populateCameraList() {
     try {
       const enumeratedDevices = await navigator.mediaDevices.enumerateDevices();
       const cameraList = enumeratedDevices.filter((device) => {
         return device.kind === 'videoinput';
       });
 
-      cameraList.forEach((device) => {
-        const option = document.createElement('option');
-        option.value = device.deviceId;
-        option.text = device.label || `Camera ${this._selectCameraElement.length + 1}`;
-        this._selectCameraElement.appendChild(option);
-      });
+      this.#selectCameraElement.innerHTML = cameraList.reduce(
+        (accumulator, device, currentIndex) => {
+          return accumulator.concat(`
+            <option value="${device.deviceId}">
+              ${device.label || `Camera ${currentIndex + 1}`}
+            </option>
+          `);
+        },
+        '',
+      );
     } catch (error) {
-      console.error('_populateCameraList: error:', error);
+      console.error('#populateCameraList: error:', error);
     }
   }
 
-  _initialListener() {
-    this._videoElement.addEventListener('canplay', () => {
-      if (this._streaming) {
+  #initialListener() {
+    this.#videoElement.addEventListener('canplay', () => {
+      if (this.#streaming) {
         return;
       }
 
-      this._height = this._videoElement.videoHeight / (this._videoElement.videoWidth / this._width);
+      this.#height = this.#videoElement.videoHeight / (this.#videoElement.videoWidth / this.#width);
 
       // Set photo width and height
-      this._canvasElement.setAttribute('width', this._width);
-      this._canvasElement.setAttribute('height', this._height);
+      this.#canvasElement.setAttribute('width', this.#width);
+      this.#canvasElement.setAttribute('height', this.#height);
 
-      this._streaming = true;
+      this.#streaming = true;
     });
 
     // Event untuk mengganti akses kamera
-    this._selectCameraElement.addEventListener('change', async () => {
+    this.#selectCameraElement.addEventListener('change', async () => {
       await this.stop();
       await this.launch();
     });
   }
 
   async launch() {
-    this._currentStream = await this._getStream();
-    this._videoElement.srcObject = this._currentStream;
-    this._videoElement.play();
+    const selectedDevice = this.#selectCameraElement.value;
+    this.#currentStream = await this.#getCameraStream(selectedDevice);
+    this.#videoElement.srcObject = this.#currentStream;
+    this.#videoElement.play();
 
-    Camera.addNewStream(this._currentStream);
+    Camera.addNewStream(this.#currentStream);
 
-    this._clearCanvas();
+    this.#clearCanvas();
   }
 
   static addNewStream(stream) {
     if (!Array.isArray(window.currentStreams)) {
-      window.currentStreams = [];
-
+      window.currentStreams = [stream];
       return;
     }
 
@@ -97,7 +100,6 @@ export default class Camera {
   static stopAllStreams() {
     if (!Array.isArray(window.currentStreams)) {
       window.currentStreams = [];
-
       return;
     }
 
@@ -110,24 +112,24 @@ export default class Camera {
   }
 
   stop() {
-    if (this._videoElement) {
-      this._videoElement.pause();
-      this._videoElement.removeAttribute('src');
-      this._videoElement.load();
+    if (this.#videoElement) {
+      this.#videoElement.pause();
+      this.#videoElement.removeAttribute('src');
+      this.#videoElement.load();
+
+      this.#streaming = false;
     }
 
-    if (this._currentStream instanceof MediaStream) {
-      this._currentStream.getTracks().forEach((track) => {
+    if (this.#currentStream instanceof MediaStream) {
+      this.#currentStream.getTracks().forEach((track) => {
         track.stop();
       });
     }
 
-    this._cheeseButtonElement.removeEventListener('click', this._cheeseButtonHandler);
+    this.#cheeseButtonElement.removeEventListener('click', this.#cheeseButtonHandler);
   }
 
-  async _getStream() {
-    const deviceId = this._selectCameraElement.value;
-
+  async #getCameraStream(deviceId = null) {
     try {
       return await navigator.mediaDevices.getUserMedia({
         video: {
@@ -145,48 +147,50 @@ export default class Camera {
             },
           });
         } catch (fallbackError) {
-          console.error('_getStream: fallbackError:', fallbackError);
+          console.error('#getCameraStream: fallbackError:', fallbackError);
           return null;
         }
       } else {
-        console.error('_getStream: error:', error);
+        console.error('#getCameraStream: error:', error);
         return null;
       }
+    } finally {
+      this.#populateCameraList();
     }
   }
 
-  _clearCanvas() {
-    const context = this._canvasElement.getContext('2d');
+  #clearCanvas() {
+    const context = this.#canvasElement.getContext('2d');
     context.fillStyle = '#AAA';
-    context.fillRect(0, 0, this._canvasElement.width, this._canvasElement.height);
+    context.fillRect(0, 0, this.#canvasElement.width, this.#canvasElement.height);
   }
 
   async takePicture() {
-    if (!(this._width && this._height)) {
+    if (!(this.#width && this.#height)) {
       return null;
     }
 
-    const context = this._canvasElement.getContext('2d');
+    const context = this.#canvasElement.getContext('2d');
 
-    this._canvasElement.width = this._width;
-    this._canvasElement.height = this._height;
-    context.drawImage(this._videoElement, 0, 0, this._width, this._height);
+    this.#canvasElement.width = this.#width;
+    this.#canvasElement.height = this.#height;
+    context.drawImage(this.#videoElement, 0, 0, this.#width, this.#height);
 
     return await new Promise((resolve) => {
-      this._canvasElement.toBlob((blob) => {
+      this.#canvasElement.toBlob((blob) => {
         if (blob !== null) {
           resolve(blob);
         }
 
-        resolve(this._canvasElement.toDataURL('image/png'));
+        resolve(this.#canvasElement.toDataURL('image/png'));
       });
     });
   }
 
   addCheeseButtonListener(selector, callback) {
-    this._cheeseButtonElement = document.querySelector(selector);
-    this._cheeseButtonHandler = callback;
+    this.#cheeseButtonElement = document.querySelector(selector);
+    this.#cheeseButtonHandler = callback;
 
-    this._cheeseButtonElement.addEventListener('click', this._cheeseButtonHandler);
+    this.#cheeseButtonElement.addEventListener('click', this.#cheeseButtonHandler);
   }
 }

@@ -1,56 +1,5 @@
-import { Workbox } from 'workbox-window';
-import {
-  generateDamageLevelMinorTemplate,
-  generateDamageLevelModerateTemplate,
-  generateDamageLevelSevereTemplate
-} from './templates';
-import { tns } from 'tiny-slider';
-
-export function transitionHelper({ skipTransition = false, updateDOM }) {
-  if (typeof updateDOM !== 'function') {
-    throw new Error('updateDOM must be a function');
-  }
-
-  if (skipTransition || !('startViewTransition' in window.document)) {
-    const updateCallbackDone = Promise
-      .resolve(updateDOM())
-      .then(() => undefined);
-
-    return {
-      ready: Promise.reject(Error('Browser ini tidak mendukung View transitions API.')),
-      updateCallbackDone,
-      finished: updateCallbackDone,
-    };
-  }
-
-  return window.document.startViewTransition(updateDOM);
-}
-
-export function isServiceWorkerAvailable() {
-  return 'serviceWorker' in navigator;
-}
-
-export async function registerServiceWorker() {
-  if (!isServiceWorkerAvailable()) {
-    console.log('Browser ini tidak mendukung Service Worker API.');
-    return;
-  }
-
-  try {
-    const wb = new Workbox('/sw.bundle.js');
-    const registrations = await wb.register();
-    console.log('Service worker telah terpasang');
-
-    registrations.onupdatefound = () => {
-      console.log('Ada service worker baru yang sedang dipasang:', registrations.installing);
-    };
-  } catch (error) {
-    console.log('Gagal memasang service worker', error);
-  }
-}
-
-export function setupSkipToContent(element, mainContent) {
-  element.addEventListener('click', () => mainContent.focus());
+export function sleep(time = 1000) {
+  return new Promise((resolve) => setTimeout(resolve, time));
 }
 
 export function showFormattedDate(date, locale = 'en-US', options = {}) {
@@ -62,42 +11,22 @@ export function showFormattedDate(date, locale = 'en-US', options = {}) {
   });
 }
 
-export function generateDamageLevelBadge(damageLevel) {
-  if (damageLevel === 'minor') {
-    return generateDamageLevelMinorTemplate();
-  }
+export async function createCarousel(containerElement, options = {}) {
+  const { tns } = await import('tiny-slider');
 
-  if (damageLevel === 'moderate') {
-    return generateDamageLevelModerateTemplate();
-  }
+  return tns({
+    container: containerElement,
+    mouseDrag: true,
+    swipeAngle: false,
+    speed: 600,
 
-  if (damageLevel === 'severe') {
-    return generateDamageLevelSevereTemplate();
-  }
+    nav: true,
+    navPosition: 'bottom',
 
-  return '';
-}
+    autoplay: false,
+    controls: false,
 
-export function diffDate(laterDate, earlierDate = new Date()) {
-  return earlierDate.getTime() - new Date(laterDate).getTime();
-}
-
-export function sleep(time = 1000) {
-  return new Promise((resolve) => setTimeout(resolve, time));
-}
-
-export function isGeolocationAvailable() {
-  return 'geolocation' in navigator;
-}
-
-export function getCurrentPosition(options = {}) {
-  return new Promise((resolve, reject) => {
-    if (!isGeolocationAvailable()) {
-      reject('Geolocation API tidak didukung oleh browser ini.');
-      return;
-    }
-
-    navigator.geolocation.getCurrentPosition(resolve, reject, options);
+    ...options,
   });
 }
 
@@ -136,11 +65,9 @@ export function convertBase64ToBlob(base64Data, contentType = '', sliceSize = 51
 }
 
 export function convertBase64ToUint8Array(base64String) {
-  const padding = '='.repeat((4 - base64String.length % 4) % 4);
-  const base64 = (base64String + padding)
-    .replace(/-/g, '+')
-    .replace(/_/g, '/');
-  const rawData = window.atob(base64);
+  const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const rawData = atob(base64);
   const outputArray = new Uint8Array(rawData.length);
 
   for (let i = 0; i < rawData.length; i++) {
@@ -149,19 +76,63 @@ export function convertBase64ToUint8Array(base64String) {
   return outputArray;
 }
 
-export function createCarousel(containerElement, options = {}) {
-  return tns({
-    container: containerElement,
-    mouseDrag: true,
-    swipeAngle: false,
-    speed: 600,
+export function setupSkipToContent(element, mainContent) {
+  element.addEventListener('click', () => mainContent.focus());
+}
 
-    nav: true,
-    navPosition: 'bottom',
+export function transitionHelper({ skipTransition = false, updateDOM }) {
+  if (typeof updateDOM !== 'function') {
+    throw new Error('updateDOM must be a function');
+  }
 
-    autoplay: false,
-    controls: false,
+  if (skipTransition || !('startViewTransition' in document)) {
+    const updateCallbackDone = Promise.resolve(updateDOM()).then(() => undefined);
 
-    ...options,
+    return {
+      ready: Promise.reject(new Error('Browser ini tidak mendukung View transitions API.')),
+      updateCallbackDone,
+      finished: updateCallbackDone,
+    };
+  }
+
+  return document.startViewTransition(updateDOM);
+}
+
+export function isGeolocationAvailable() {
+  return 'geolocation' in navigator;
+}
+
+export function getCurrentPosition(options = {}) {
+  return new Promise((resolve, reject) => {
+    if (!isGeolocationAvailable()) {
+      reject('Geolocation API tidak didukung oleh browser ini.');
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(resolve, reject, options);
   });
+}
+
+export function isServiceWorkerAvailable() {
+  return 'serviceWorker' in navigator;
+}
+
+export async function registerServiceWorker() {
+  if (!isServiceWorkerAvailable()) {
+    console.log('Browser ini tidak mendukung Service Worker API.');
+    return;
+  }
+
+  try {
+    const { Workbox } = await import('workbox-window');
+    const wb = new Workbox('/sw.bundle.js');
+    const registrations = await wb.register();
+    console.log('Service worker telah terpasang');
+
+    registrations.onupdatefound = () => {
+      console.log('Ada service worker baru yang sedang dipasang:', registrations.installing);
+    };
+  } catch (error) {
+    console.log('Gagal memasang service worker', error);
+  }
 }

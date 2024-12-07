@@ -1,37 +1,46 @@
-import { getAllReports } from '../../data/api';
-import Leaflet from '../../utils/leaflet';
+import { reportMapper } from '../../data/api-mapper';
 
-export class HomePresenter {
-  constructor(view) {
-    this._view = view;
+export default class HomePresenter {
+  #view;
+  #model;
+
+  constructor({ view, model }) {
+    this.#view = view;
+    this.#model = model;
   }
 
-  async getReports() {
-    this._view.showLoading('#loader');
+  async showReportsListMap() {
+    this.#view.showMapLoading();
     try {
-      const response = await getAllReports();
+      await this.#view.initialMap();
+    } catch (error) {
+      console.error('showReportsListMap: error:', error);
+    } finally {
+      this.#view.hideMapLoading();
+    }
+  }
+
+  async initialGalleryAndMap() {
+    this.#view.showLoading();
+    try {
+      await this.showReportsListMap();
+
+      const response = await this.#model.getAllReports();
 
       if (!response.ok) {
-        console.error('getReports: response:', response);
-        this._view.populateReportsListError(response.message);
+        console.error('initialGalleryAndMap: response:', response);
+        this.#view.populateReportsListError(response.message);
         return;
       }
 
-      const reportsPromises = response.data.map(async (report) => ({
-        ...report,
-        location: {
-          ...report.location,
-          placeName: await Leaflet.getPlaceNameByCoordinate(report.location.latitude, report.location.longitude),
-        },
-      }));
-      const reports = await Promise.all(reportsPromises);
+      const reports = await Promise.all(response.data.map(reportMapper));
 
-      this._view.populateReportsList(response.message, reports);
+      this.#view.populateReportsList(response.message, reports);
     } catch (error) {
-      console.error('getReports: error:', error);
-      this._view.populateReportsListError(error.message);
+      console.error('initialGalleryAndMap: error:', error);
+      this.#view.populateReportsListError(error.message);
     } finally {
-      this._view.hideLoading('#loader');
+      this.#view.hideLoading();
     }
   }
 }

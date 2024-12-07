@@ -1,14 +1,11 @@
-import {
-  parseActiveUrl,
-  parseAndCombineActiveUrl,
-  parseAndCombineUrl,
-  parseUrl,
-} from '../routes/url-parser';
+import { getActiveRoute } from '../routes/url-parser';
 import {
   generateAuthenticatedNavigationListTemplate,
-  generateMainNavigationListTemplate, generateSubscribeButtonTemplate,
-  generateUnauthenticatedNavigationListTemplate, generateUnsubscribeButtonTemplate,
-} from '../utils/templates';
+  generateMainNavigationListTemplate,
+  generateSubscribeButtonTemplate,
+  generateUnauthenticatedNavigationListTemplate,
+  generateUnsubscribeButtonTemplate,
+} from '../templates';
 import {
   convertBase64ToUint8Array,
   isServiceWorkerAvailable,
@@ -18,43 +15,54 @@ import {
 import { subscribePushNotification, unsubscribePushNotification } from '../data/api';
 import { getAccessToken, getLogout } from '../utils/auth';
 import { isNotificationReady } from '../utils/notification-helper';
-import routes from '../routes/routes';
-import CONFIG from '../config';
+import { routes } from '../routes/routes';
+import { VAPID_PUBLIC_KEY } from '../config';
 
 export default class App {
-  constructor({ drawerNavigation, drawerButton, content }) {
-    this._content = content;
-    this._drawerButton = drawerButton;
-    this._drawerNavigation = drawerNavigation;
+  #content;
+  #drawerButton;
+  #drawerNavigation;
+  #skipLinkButton;
 
-    this._currentPath = window.location.hash.slice(1);
+  constructor({ content, drawerNavigation, drawerButton, skipLinkButton }) {
+    this.#content = content;
+    this.#drawerButton = drawerButton;
+    this.#drawerNavigation = drawerNavigation;
+    this.#skipLinkButton = skipLinkButton;
 
-    setupSkipToContent(document.querySelector('#skip-link'), content);
-    this._setupDrawer();
+    this.#init();
   }
 
-  _setupDrawer() {
-    this._drawerButton.addEventListener('click', () => {
-      this._drawerNavigation.classList.toggle('open');
+  #init() {
+    setupSkipToContent(this.#skipLinkButton, this.#content);
+    this.#setupDrawer();
+  }
+
+  #setupDrawer() {
+    this.#drawerButton.addEventListener('click', () => {
+      this.#drawerNavigation.classList.toggle('open');
     });
 
     document.body.addEventListener('click', (event) => {
-      if (!this._drawerNavigation.contains(event.target) && !this._drawerButton.contains(event.target)) {
-        this._drawerNavigation.classList.remove('open');
+      const isInsideDrawer = this.#drawerNavigation.contains(event.target);
+      const isInsideButton = this.#drawerButton.contains(event.target);
+
+      if (!(isInsideDrawer || isInsideButton)) {
+        this.#drawerNavigation.classList.remove('open');
       }
 
-      this._drawerNavigation.querySelectorAll('a').forEach((link) => {
+      this.#drawerNavigation.querySelectorAll('a').forEach((link) => {
         if (link.contains(event.target)) {
-          this._drawerNavigation.classList.remove('open');
+          this.#drawerNavigation.classList.remove('open');
         }
       });
     });
   }
 
-  _setupNavigationList() {
+  #setupNavigationList() {
     const isLogin = !!getAccessToken();
-    const navListMain = this._drawerNavigation.children.namedItem('navlist-main');
-    const navList = this._drawerNavigation.children.namedItem('navlist');
+    const navListMain = this.#drawerNavigation.children.namedItem('navlist-main');
+    const navList = this.#drawerNavigation.children.namedItem('navlist');
 
     // User not log in
     if (!isLogin) {
@@ -66,165 +74,87 @@ export default class App {
     navListMain.innerHTML = generateMainNavigationListTemplate();
     navList.innerHTML = generateAuthenticatedNavigationListTemplate();
 
-    const logoutButton = document.querySelector('#logout-button');
+    const logoutButton = document.getElementById('logout-button');
     logoutButton.addEventListener('click', (event) => {
       event.preventDefault();
 
       getLogout();
 
-      window.location.hash = '/login';
+      location.hash = '/login';
     });
   }
 
-  async _setupPushNotification() {
-    const pushNotificationTools = document.querySelector('#push-notification-tools');
+  async #setupPushNotification() {
+    const pushNotificationTools = document.getElementById('push-notification-tools');
+    const isSubscribed = await this.#isCurrentSubscriptionAvailable();
 
-    const isSubscribed = await this._isCurrentSubscriptionAvailable();
     if (isSubscribed) {
       pushNotificationTools.innerHTML = generateUnsubscribeButtonTemplate();
-      document.querySelector('#unsubscribe-button').addEventListener('click', () => {
-        this._unsubscribe();
+      document.getElementById('unsubscribe-button').addEventListener('click', () => {
+        this.#unsubscribe();
       });
-
       return;
     }
 
     pushNotificationTools.innerHTML = generateSubscribeButtonTemplate();
-    document.querySelector('#subscribe-button').addEventListener('click', () => {
-      this._subscribe();
+    document.getElementById('subscribe-button').addEventListener('click', () => {
+      this.#subscribe();
     });
   }
 
   async renderPage() {
-    const url = parseAndCombineActiveUrl();
+    const url = getActiveRoute();
     const route = routes[url] ?? null;
 
     // Check if route available
     if (!route) {
-      window.location.hash = '/404';
+      location.hash = '/404';
       return;
     }
 
     // Get page instance
     const page = route();
+
     if (page) {
-      const navigationType = this._getNavigationType();
-      let targetThumbnail = null;
-
-      if (navigationType === 'list-to-detail') {
-        targetThumbnail = this._applyListToDetailNavigation();
-      }
-
       const transition = transitionHelper({
         updateDOM: async () => {
-          this._content.innerHTML = page.render();
-          await page.afterRender();
-
-          if (navigationType === 'detail-to-list') {
-            targetThumbnail = this._applyDetailToListNavigation();
-          }
+          this.#content.innerHTML = await page.render();
+          page.afterRender();
         },
       });
 
+      transition.ready.catch(console.error);
       transition.updateCallbackDone.then(() => {
-        window.scrollTo({ top: 0, behavior: 'instant' });
-        this._setupNavigationList();
+        scrollTo({ top: 0, behavior: 'instant' });
+        this.#setupNavigationList();
 
         if (isServiceWorkerAvailable()) {
-          this._setupPushNotification();
+          this.#setupPushNotification();
         }
       });
-      transition.finished.then(() => {
-        // Clear the temporary tag
-        this._cleanTransitionName(targetThumbnail);
-
-        // Update current path after transition has been finished
-        this._currentPath = window.location.hash.slice(1);
-      });
     }
   }
 
-  _getNavigationType() {
-    const fromPath = parseAndCombineUrl(this._currentPath);
-    const toPath = parseAndCombineActiveUrl();
-
-    const reportListPath = ['/', '/bookmark'];
-    const reportDetailPath = ['/reports/:id'];
-
-    if (reportListPath.includes(fromPath) && reportDetailPath.includes(toPath)) {
-      return 'list-to-detail';
-    }
-
-    if (reportDetailPath.includes(fromPath) && reportListPath.includes(toPath)) {
-      return 'detail-to-list';
-    }
-
-    return null;
-  }
-
-  _applyListToDetailNavigation() {
-    const extractUrl = parseActiveUrl();
-    const target = document.querySelector(`[data-reportid="${extractUrl.id}"]`);
-
-    if (!target) {
-      return null;
-    }
-
-    target.querySelector('.report-item__image').style.viewTransitionName = 'report-img';
-    target.querySelector('.report-item__title').style.viewTransitionName = 'report-title';
-    target.querySelector('.report-item__createdat').style.viewTransitionName = 'report-createdat';
-    target.querySelector('.report-item__description').style.viewTransitionName = 'report-description';
-    target.querySelector('.report-item__author').style.viewTransitionName = 'report-reporter';
-
-    return target;
-  }
-
-  _applyDetailToListNavigation() {
-    const extractUrl = parseUrl(this._currentPath);
-    const target = document.querySelector(`[data-reportid="${extractUrl.id}"]`);
-
-    if (!target) {
-      return null;
-    }
-
-    target.querySelector('.report-item__image').style.viewTransitionName = 'report-img';
-    target.querySelector('.report-item__title').style.viewTransitionName = 'report-title';
-    target.querySelector('.report-item__createdat').style.viewTransitionName = 'report-createdat';
-    target.querySelector('.report-item__description').style.viewTransitionName = 'report-description';
-    target.querySelector('.report-item__author').style.viewTransitionName = 'report-reporter';
-
-    return target;
-  }
-
-  _cleanTransitionName(targetThumbnail) {
-    if (targetThumbnail) {
-      targetThumbnail.querySelector('.report-item__image').style.viewTransitionName = '';
-      targetThumbnail.querySelector('.report-item__title').style.viewTransitionName = '';
-      targetThumbnail.querySelector('.report-item__createdat').style.viewTransitionName = '';
-      targetThumbnail.querySelector('.report-item__description').style.viewTransitionName = '';
-      targetThumbnail.querySelector('.report-item__author').style.viewTransitionName = '';
-    }
-  }
-
-  async _subscribe() {
-    if (await this._isCurrentSubscriptionAvailable()) {
-      window.alert('Telah terdaftar untuk menerima notifikasi.');
+  async #subscribe() {
+    if (await this.#isCurrentSubscriptionAvailable()) {
+      alert('Telah terdaftar untuk menerima notifikasi.');
       return;
     }
 
     if (!(await isNotificationReady())) {
-      window.alert('Notification belum tersedia.');
+      alert('Notification belum tersedia.');
       return;
     }
 
     console.log('Sedang mendaftar push notification...');
+
     const registrations = await navigator.serviceWorker.getRegistration();
     const pushSubscription = await registrations?.pushManager.subscribe(
-      this._generateSubscribeOptions(),
+      this.#generateSubscribeOptions(),
     );
 
     if (!pushSubscription) {
-      console.error('_subscribe: pushSubscription:', pushSubscription);
+      console.error('#subscribe: pushSubscription:', pushSubscription);
       return;
     }
 
@@ -240,8 +170,8 @@ export default class App {
       });
 
       if (!response.ok) {
-        console.error('_subscribe: response:', response);
-        window.alert('Gagal mendaftar push notification ke server.');
+        console.error('#subscribe: response:', response);
+        alert('Gagal mendaftar push notification ke server.');
 
         // Undo to subscribing push notification
         await pushSubscription.unsubscribe();
@@ -250,19 +180,20 @@ export default class App {
 
       console.log('Berhasil mendaftar push notification ke server.');
     } catch (error) {
-      console.error('_subscribe: error:', error);
-      window.alert('Gagal mendaftar push notification ke server.');
+      console.error('#subscribe: error:', error);
+      alert('Gagal mendaftar push notification ke server.');
 
       // Undo to subscribing push notification
       await pushSubscription.unsubscribe();
     } finally {
-      this._setupPushNotification();
+      this.#setupPushNotification();
     }
   }
 
-  async _unsubscribe() {
+  async #unsubscribe() {
     const registrations = await navigator.serviceWorker.getRegistration();
     const pushSubscription = await registrations?.pushManager.getSubscription();
+
     if (!pushSubscription) {
       console.error('Gagal memutus langganan karena belum berlangganan push notification.');
       return;
@@ -270,13 +201,11 @@ export default class App {
 
     try {
       const { endpoint, expirationTime, keys } = pushSubscription.toJSON();
-      const response = await unsubscribePushNotification({
-        endpoint,
-      });
+      const response = await unsubscribePushNotification({ endpoint });
 
       if (!response.ok) {
-        console.error('_unsubscribe: response:', response);
-        window.alert('Gagal memutus langganan push notification dari server.');
+        console.error('#unsubscribe: response:', response);
+        alert('Gagal memutus langganan push notification dari server.');
         return;
       }
 
@@ -297,22 +226,22 @@ export default class App {
 
       console.log('Berhasil memutus langganan push notification dari server.');
     } catch (error) {
-      console.error('_unsubscribe: error:', error);
-      window.alert('Gagal memutus langganan push notification dari server');
+      console.error('#unsubscribe: error:', error);
+      alert('Gagal memutus langganan push notification dari server');
     } finally {
-      this._setupPushNotification();
+      this.#setupPushNotification();
     }
   }
 
-  async _isCurrentSubscriptionAvailable() {
+  async #isCurrentSubscriptionAvailable() {
     const registrations = await navigator.serviceWorker.getRegistration();
     return !!(await registrations?.pushManager.getSubscription());
   }
 
-  _generateSubscribeOptions() {
+  #generateSubscribeOptions() {
     return {
       userVisibleOnly: true,
-      applicationServerKey: convertBase64ToUint8Array(CONFIG.VAPID_PUBLIC_KEY),
+      applicationServerKey: convertBase64ToUint8Array(VAPID_PUBLIC_KEY),
     };
   }
 }

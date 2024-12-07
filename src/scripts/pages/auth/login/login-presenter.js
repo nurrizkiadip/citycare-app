@@ -1,32 +1,33 @@
-import { getLogin } from '../../../data/api';
-import { putAccessToken } from '../../../utils/auth';
+export default class LoginPresenter {
+  #view;
+  #model;
+  #authModel;
 
-class LoginPresenter {
-  constructor(view) {
-    this._view = view;
+  constructor({ view, model, authModel }) {
+    this.#view = view;
+    this.#model = model;
+    this.#authModel = authModel;
   }
 
   async getLogin({ email, password }) {
-    this._view.showLoading('#loader');
+    this.#view.showSubmitLoadingButton();
     try {
-      const response = await getLogin({ email, password });
+      const response = await this.#model.getLogin({ email, password });
 
       if (!response.ok) {
         console.error('getLogin: response:', response);
-        this._view.loginFailed(response.message);
+        this.#view.loginFailed(response.message);
         return;
       }
 
-      putAccessToken(response.data.accessToken);
+      this.#authModel.putAccessToken(response.data.accessToken);
 
-      this._view.loginSuccessfully(response.message, response.data);
+      this.#view.loginSuccessfully(response.message, response.data);
     } catch (error) {
       console.error('getLogin: error:', error);
-      this._view.loginFailed(error.message);
+      this.#view.loginFailed(error.message);
     } finally {
-      this._view.hideLoading('#loader');
+      this.#view.hideSubmitLoadingButton();
     }
   }
 }
-
-export { LoginPresenter };

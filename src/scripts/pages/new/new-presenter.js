@@ -1,15 +1,25 @@
-import {
-  sendReportToAllUserViaNotification,
-  storeNewReport
-} from '../../data/api';
+export default class NewPresenter {
+  #view;
+  #model;
 
-class NewPresenter {
-  constructor(view) {
-    this._view = view;
+  constructor({ view, model }) {
+    this.#view = view;
+    this.#model = model;
+  }
+
+  async showNewFormMap() {
+    this.#view.showMapLoading();
+    try {
+      await this.#view.initialMap();
+    } catch (error) {
+      console.error('showNewFormMap: error:', error);
+    } finally {
+      this.#view.hideMapLoading();
+    }
   }
 
   async postNewReport({ title, damageLevel, description, evidenceImages, latitude, longitude }) {
-    this._view.showLoading('#new-report-loader');
+    this.#view.showSubmitLoadingButton();
     try {
       const data = {
         title: title,
@@ -19,39 +29,37 @@ class NewPresenter {
         latitude: latitude,
         longitude: longitude,
       };
-
-      const response = await storeNewReport(data);
+      const response = await this.#model.storeNewReport(data);
 
       if (!response.ok) {
         console.error('postNewReport: response:', response);
-        this._view.storeFailed(response.message);
+        this.#view.storeFailed(response.message);
         return;
       }
 
-      this._notifyToAllUser(response.data.id);
-      this._view.storeSuccessfully(response.message, response.data);
+      this.#notifyToAllUser(response.data.id);
+      this.#view.storeSuccessfully(response.message, response.data);
     } catch (error) {
       console.error('postNewReport: error:', error);
-      this._view.storeFailed(error.message);
+      this.#view.storeFailed(error.message);
     } finally {
-      this._view.hideLoading('#new-report-loader');
+      this.#view.hideSubmitLoadingButton();
     }
   }
 
-  async _notifyToAllUser(reportId) {
+  async #notifyToAllUser(reportId) {
     try {
-      const response = await sendReportToAllUserViaNotification(reportId);
+      const response = await this.#model.sendReportToAllUserViaNotification(reportId);
 
       if (!response.ok) {
-        console.error('_notifyToAllUser: response:', response);
-        return;
+        console.error('#notifyToAllUser: response:', response);
+        return false;
       }
 
-      console.log('_notifyToAllUser:', response.message);
+      return true;
     } catch (error) {
-      console.error('_notifyToAllUser: error:', error);
+      console.error('#notifyToAllUser: error:', error);
+      return false;
     }
   }
 }
-
-export { NewPresenter };

@@ -1,29 +1,29 @@
-import { getRegistered } from '../../../data/api';
+export default class RegisterPresenter {
+  #view;
+  #model;
 
-class RegisterPresenter {
-  constructor(view) {
-    this._view = view;
+  constructor({ view, model }) {
+    this.#view = view;
+    this.#model = model;
   }
 
   async getRegistered({ name, email, password }) {
-    this._view.showLoading('#loader');
+    this.#view.showSubmitLoadingButton();
     try {
-      const response = await getRegistered({ name, email, password });
+      const response = await this.#model.getRegistered({ name, email, password });
 
       if (!response.ok) {
         console.error('getRegistered: response:', response);
-        this._view.registeredFailed(response.message);
+        this.#view.registeredFailed(response.message);
         return;
       }
 
-      this._view.registeredSuccessfully(response.message, response.data);
+      this.#view.registeredSuccessfully(response.message, response.data);
     } catch (error) {
       console.error('getRegistered: error:', error);
-      this._view.registeredFailed(error.message);
+      this.#view.registeredFailed(error.message);
     } finally {
-      this._view.hideLoading('#loader');
+      this.#view.hideSubmitLoadingButton();
     }
   }
 }
-
-export { RegisterPresenter };

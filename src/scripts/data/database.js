@@ -18,7 +18,7 @@ export async function getAllReports() {
 
 export async function getReportById(id) {
   if (!id) {
-    return;
+    throw new Error('`id` is required to retrieve.');
   }
 
   return (await dbPromise).get(OBJECT_STORE_NAME, id);
@@ -26,7 +26,7 @@ export async function getReportById(id) {
 
 export async function putReport(report) {
   if (!Object.hasOwn(report, 'id')) {
-    return;
+    throw new Error('`id` is required to save.');
   }
 
   return (await dbPromise).put(OBJECT_STORE_NAME, report);

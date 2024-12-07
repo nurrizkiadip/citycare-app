@@ -1,96 +1,114 @@
-import { generateReportItemTemplate } from '../../utils/templates';
-import { BookmarkPresenter } from './bookmark-presenter';
+import {
+  generateLoaderAbsoluteTemplate,
+  generateReportItemTemplate,
+  generateReportsListEmptyTemplate,
+  generateReportsListErrorTemplate,
+} from '../../templates';
+import BookmarkPresenter from './bookmark-presenter';
 import Leaflet from '../../utils/leaflet';
+import { MaptilerStyle } from '@maptiler/leaflet-maptilersdk';
+import * as CityCareDatabase from '../../data/database';
 
 export default class BookmarkPage {
-  _presenter = null;
-  _map = null;
+  #presenter = null;
+  #map = null;
 
-  render() {
+  async render() {
     return `
-      <section class="map">
-        <div id="reports-map" class="reports-map"></div>
+      <section>
+        <div class="reports-list__map__container">
+          <div id="map" class="reports-list__map"></div>
+          <div id="map-loading-container"></div>
+        </div>
       </section>
 
       <section class="container">
-        <h2 class="section-title">Daftar Laporan Kerusakan Tersimpan</h2>
+        <h1 class="section-title">Daftar Laporan Kerusakan Tersimpan</h1>
 
-        <div id="reports" class="reports"></div>
-        <div id="loader" class="loader"></div>
+        <div class="reports-list__container">
+          <div id="reports-list"></div>
+          <div id="reports-list-loading-container"></div>
+        </div>
       </section>
     `;
   }
 
   async afterRender() {
-    this._presenter = new BookmarkPresenter(this);
+    this.#presenter = new BookmarkPresenter({
+      view: this,
+      model: CityCareDatabase,
+    });
 
-    // Setup map first before another
-    await this._setupMap();
-
-    await this._presenter.getAllBookmarkedReports();
+    await this.#presenter.initialGalleryAndMap();
   }
 
   populateBookmarkedReports(message, reports) {
-    if (!Array.isArray(reports)) {
-      throw new Error('reports must be an array');
-    }
-
     if (reports.length <= 0) {
-      document.getElementById('reports').innerHTML = `
-        <div id="reports-list-empty" class="reports-list__empty">
-          Daftar laporan tersimpan sedang kosong, nih.
-        </div>
-      `;
-
+      this.populateBookmarkedReportsListEmpty();
       return;
     }
 
-    const html = reports.map((report) => {
-      if (this._map) {
+    const html = reports.reduce((accumulator, report) => {
+      if (this.#map) {
         const coordinate = [report.location.latitude, report.location.longitude];
         const markerOptions = { alt: report.title };
         const popupOptions = { content: report.title };
-        this._map.addMarker(coordinate, markerOptions, popupOptions);
+        this.#map.addMarker(coordinate, markerOptions, popupOptions);
       }
 
-      return generateReportItemTemplate(report);
-    }).join('');
+      return accumulator.concat(
+        generateReportItemTemplate({
+          ...report,
+          placeNameLocation: report.location.placeName,
+          reporterName: report.reporter.name,
+        }),
+      );
+    }, '');
 
-    document.getElementById('reports').innerHTML = `
-      <div id="reports-list" class="reports-list">
-        ${html}
-      </div>
+    document.getElementById('reports-list').innerHTML = `
+      <div class="reports-list">${html}</div>
     `;
+  }
+
+  populateBookmarkedReportsListEmpty() {
+    document.getElementById('reports-list').innerHTML = generateReportsListEmptyTemplate();
   }
 
   populateBookmarkedReportsError(message) {
-    document.getElementById('reports').innerHTML = `
-      <div id="reports-list-error" class="reports-list__error">
-        Terjadi kesalahan mengambil daftar laporan tersimpan, nih.<br>
-        ${message}
-      </div>
-    `;
+    document.getElementById('reports-list').innerHTML = generateReportsListErrorTemplate(message);
   }
 
-  async _setupMap() {
-    this._map = await Leaflet.build('#reports-map', {
-      zoom: 8,
+  async initialMap() {
+    this.#map = await Leaflet.build('#map', {
+      zoom: 9,
     });
 
-    this._map.addNewRasterTile('MapTiler', 'https://api.maptiler.com/maps/streets-v2/{z}/{x}/{y}.png?key=L1V7oYaAoswTHnKhMMJ8', {
-      attributions: '<a href="https://www.maptiler.com/copyright/" target="_blank">&copy; MapTiler</a> <a href="https://www.openstreetmap.org/copyright" target="_blank">&copy; OpenStreetMap contributors</a>',
-    });
-    this._map.addMaptilerTile('MapTiler Vector');
-    this._map.addMapTilerGeocoding();
+    this.#map.addNewRasterTile(
+      'MapTiler',
+      'https://api.maptiler.com/maps/streets-v2/{z}/{x}/{y}.png',
+      {
+        attributions:
+          '<a href="https://www.maptiler.com/copyright/" target="_blank">&copy; MapTiler</a> <a href="https://www.openstreetmap.org/copyright" target="_blank">&copy; OpenStreetMap contributors</a>',
+      },
+    );
+    this.#map.addMaptilerTile('MapTiler Vector', MaptilerStyle.STREETS);
+    this.#map.addMapTilerGeocoding();
   }
 
-  showLoading(selector) {
-    const loader = document.querySelector(selector);
-    loader.style.display = 'block';
+  showMapLoading() {
+    document.getElementById('map-loading-container').innerHTML = generateLoaderAbsoluteTemplate();
   }
 
-  hideLoading(selector) {
-    const loader = document.querySelector(selector);
-    loader.style.display = 'none';
+  hideMapLoading() {
+    document.getElementById('map-loading-container').innerHTML = '';
+  }
+
+  showLoading() {
+    document.getElementById('reports-list-loading-container').innerHTML =
+      generateLoaderAbsoluteTemplate();
+  }
+
+  hideLoading() {
+    document.getElementById('reports-list-loading-container').innerHTML = '';
   }
 }

@@ -1,20 +1,40 @@
-import { getAllReports } from '../../data/database';
+import { reportMapper } from '../../data/api-mapper';
 
-export class BookmarkPresenter {
-  constructor(view) {
-    this._view = view;
+export default class BookmarkPresenter {
+  #view;
+  #model;
+
+  constructor({ view, model }) {
+    this.#view = view;
+    this.#model = model;
   }
 
-  async getAllBookmarkedReports() {
-    this._view.showLoading('#loader');
+  async showReportsListMap() {
+    this.#view.showMapLoading();
     try {
-      const reports = await getAllReports();
-      this._view.populateBookmarkedReports('Berhasil mendapatkan daftar laporan tersimpan.', reports);
+      await this.#view.initialMap();
     } catch (error) {
-      console.error('getAllBookmarkedReports: error:', error);
-      this._view.populateBookmarkedReportsError(error.message);
+      console.error('showReportsListMap: error:', error);
     } finally {
-      this._view.hideLoading('#loader');
+      this.#view.hideMapLoading();
+    }
+  }
+
+  async initialGalleryAndMap() {
+    this.#view.showLoading();
+    try {
+      await this.showReportsListMap();
+
+      const listOfReports = await this.#model.getAllReports();
+      const reports = await Promise.all(listOfReports.map(reportMapper));
+
+      const message = 'Berhasil mendapatkan daftar laporan tersimpan.';
+      this.#view.populateBookmarkedReports(message, reports);
+    } catch (error) {
+      console.error('initialGalleryAndMap: error:', error);
+      this.#view.populateBookmarkedReportsError(error.message);
+    } finally {
+      this.#view.hideLoading();
     }
   }
 }

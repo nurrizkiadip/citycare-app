@@ -1,28 +1,28 @@
 import { getAccessToken } from '../utils/auth';
-import CONFIG from '../config';
+import { BASE_URL } from '../config';
 
 const ENDPOINTS = {
   // Auth
-  REGISTER: `${CONFIG.BASE_URL}/register`,
-  LOGIN: `${CONFIG.BASE_URL}/login`,
-  MY_USER_INFO: `${CONFIG.BASE_URL}/users/me`,
+  REGISTER: `${BASE_URL}/register`,
+  LOGIN: `${BASE_URL}/login`,
+  MY_USER_INFO: `${BASE_URL}/users/me`,
 
   // Report
-  REPORT_LIST: `${CONFIG.BASE_URL}/reports`,
-  REPORT_DETAIL: (id) => `${CONFIG.BASE_URL}/reports/${id}`,
-  STORE_NEW_REPORT: `${CONFIG.BASE_URL}/reports`,
+  REPORT_LIST: `${BASE_URL}/reports`,
+  REPORT_DETAIL: (id) => `${BASE_URL}/reports/${id}`,
+  STORE_NEW_REPORT: `${BASE_URL}/reports`,
 
   // Report Comment
-  REPORT_COMMENTS_LIST: (reportId) => `${CONFIG.BASE_URL}/reports/${reportId}/comments`,
-  STORE_NEW_REPORT_COMMENT: (reportId) => `${CONFIG.BASE_URL}/reports/${reportId}/comments`,
+  REPORT_COMMENTS_LIST: (reportId) => `${BASE_URL}/reports/${reportId}/comments`,
+  STORE_NEW_REPORT_COMMENT: (reportId) => `${BASE_URL}/reports/${reportId}/comments`,
 
   // Report Comment
-  SUBSCRIBE: `${CONFIG.BASE_URL}/notifications/subscribe`,
-  UNSUBSCRIBE: `${CONFIG.BASE_URL}/notifications/subscribe`,
-  SEND_REPORT_TO_ME: (reportId) => `${CONFIG.BASE_URL}/reports/${reportId}/notify-me`,
-  SEND_REPORT_TO_USER: (reportId) => `${CONFIG.BASE_URL}/reports/${reportId}/notify`,
-  SEND_REPORT_TO_ALL_USER: (reportId) => `${CONFIG.BASE_URL}/reports/${reportId}/notify-all`,
-  SEND_COMMENT_TO_REPORT_OWNER: (reportId, commentId) => `${CONFIG.BASE_URL}/reports/${reportId}/comments/${commentId}/notify`,
+  SUBSCRIBE: `${BASE_URL}/notifications/subscribe`,
+  UNSUBSCRIBE: `${BASE_URL}/notifications/subscribe`,
+  SEND_REPORT_TO_ME: (reportId) => `${BASE_URL}/reports/${reportId}/notify-me`,
+  SEND_REPORT_TO_USER: (reportId) => `${BASE_URL}/reports/${reportId}/notify`,
+  SEND_REPORT_TO_ALL_USER: (reportId) => `${BASE_URL}/reports/${reportId}/notify-all`,
+  SEND_COMMENT_TO_REPORT_OWNER: (reportId, commentId) => `${BASE_URL}/reports/${reportId}/comments/${commentId}/notify`,
 };
 
 export async function getRegistered({ name, email, password }) {
