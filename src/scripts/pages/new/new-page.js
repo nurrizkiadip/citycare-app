@@ -81,12 +81,12 @@ export default class NewPage {
               </div>
             </div>
             <div class="form-control">
-              <div class="new-form__documentations__title">Dokumentasi</div>
+              <label for="documentations-input" class="new-form__documentations__title">Dokumentasi</label>
               <div id="documentations-more-info">Anda dapat menyertakan foto atau video sebagai dokumentasi.</div>
 
               <div class="new-form__documentations__container">
                 <div class="new-form__documentations__buttons">
-                  <label for="documentations-input" class="btn btn-outline">Ambil Gambar</label>
+                  <button id="documentations-input-button" class="btn btn-outline" type="button">Ambil Gambar</button>
                   <input
                     id="documentations-input"
                     class="new-form__documentations__input"
@@ -170,12 +170,16 @@ export default class NewPage {
     });
 
     document.getElementById('documentations-input').addEventListener('change', async (event) => {
-      const insertingPicturesPromises = Object.values(event.srcElement.files).map(
-        this.#addTakenPicture,
-      );
+      const insertingPicturesPromises = Object.values(event.target.files).map(async (file) => {
+        return await this.#addTakenPicture(file);
+      });
       await Promise.all(insertingPicturesPromises);
 
       await this.#populateTakenPictures();
+    });
+
+    document.getElementById('documentations-input-button').addEventListener('click', () => {
+      this.#form.elements.namedItem('documentations-input').click();
     });
 
     const cameraContainer = document.getElementById('camera-container');
@@ -267,7 +271,7 @@ export default class NewPage {
     }
 
     const newDocumentation = {
-      id: Number(new Date()),
+      id: `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
       blob: blob,
     };
     this.#takenDocumentations = [...this.#takenDocumentations, newDocumentation];
@@ -289,6 +293,7 @@ export default class NewPage {
     document.querySelectorAll('button[data-deletepictureid]').forEach((button) =>
       button.addEventListener('click', (event) => {
         const pictureId = event.currentTarget.dataset.deletepictureid;
+
         const deleted = this.#removePicture(pictureId);
         if (!deleted) {
           console.log(`Picture with id ${pictureId} was not found`);
@@ -324,8 +329,10 @@ export default class NewPage {
   }
 
   storeSuccessfully(message) {
-    alert(message);
+    console.log(message);
     this.clearForm();
+
+    // Redirect page
     location.href = '/';
   }
 

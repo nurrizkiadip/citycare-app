@@ -81,15 +81,11 @@ export function setupSkipToContent(element, mainContent) {
 }
 
 export function transitionHelper({ skipTransition = false, updateDOM }) {
-  if (typeof updateDOM !== 'function') {
-    throw new Error('updateDOM must be a function');
-  }
-
-  if (skipTransition || !('startViewTransition' in document)) {
+  if (skipTransition || !document.startViewTransition) {
     const updateCallbackDone = Promise.resolve(updateDOM()).then(() => undefined);
 
     return {
-      ready: Promise.reject(new Error('Browser ini tidak mendukung View transitions API.')),
+      ready: Promise.reject(Error('View transitions unsupported')),
       updateCallbackDone,
       finished: updateCallbackDone,
     };
@@ -105,7 +101,7 @@ export function isGeolocationAvailable() {
 export function getCurrentPosition(options = {}) {
   return new Promise((resolve, reject) => {
     if (!isGeolocationAvailable()) {
-      reject('Geolocation API tidak didukung oleh browser ini.');
+      reject('Geolocation API unsupported');
       return;
     }
 
@@ -119,7 +115,7 @@ export function isServiceWorkerAvailable() {
 
 export async function registerServiceWorker() {
   if (!isServiceWorkerAvailable()) {
-    console.log('Browser ini tidak mendukung Service Worker API.');
+    console.log('Service Worker API unsupported');
     return;
   }
 

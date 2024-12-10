@@ -61,8 +61,10 @@ export default class LoginPage {
   }
 
   loginSuccessfully(message) {
-    alert(message);
-    location.hash = '/';
+    console.log(message);
+
+    // Redirect page
+    location.href = '/';
   }
 
   loginFailed(message) {

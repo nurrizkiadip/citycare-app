@@ -252,7 +252,11 @@ export function generateReportDetailTemplate({
           <h2>Aksi</h2>
           <div class="report-detail__actions__buttons">
             <div id="save-actions-container"></div>
-            <div id="notify-me-actions-container"></div>
+            <div id="notify-me-actions-container">
+              <button id="report-detail-notify-me" class="btn btn-transparent">
+                Try Notify Me <i class="far fa-bell"></i>
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -272,14 +276,6 @@ export function generateUnsubscribeButtonTemplate() {
   return `
     <button id="unsubscribe-button" class="btn unsubscribe-button">
       Unsubscribe <i class="fas fa-bell-slash"></i>
-    </button>
-  `;
-}
-
-export function generateNotifyMeButtonTemplate() {
-  return `
-    <button id="report-detail-notify-me" class="btn btn-transparent">
-      Try Notify Me <i class="far fa-bell"></i>
     </button>
   `;
 }

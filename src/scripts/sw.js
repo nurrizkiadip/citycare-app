@@ -1,6 +1,6 @@
 import { precacheAndRoute } from 'workbox-precaching';
 import { registerRoute } from 'workbox-routing';
-import { CacheFirst, StaleWhileRevalidate } from 'workbox-strategies';
+import { NetworkFirst, CacheFirst, StaleWhileRevalidate } from 'workbox-strategies';
 import { BASE_URL } from './config';
 
 // Do precaching
@@ -20,7 +20,7 @@ registerRoute(
   ({ url }) => {
     return url.href.startsWith(BASE_URL);
   },
-  new StaleWhileRevalidate({
+  new NetworkFirst({
     cacheName: 'api',
   }),
 );

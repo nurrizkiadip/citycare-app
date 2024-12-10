@@ -44,10 +44,10 @@ export default class App {
     });
 
     document.body.addEventListener('click', (event) => {
-      const isInsideDrawer = this.#drawerNavigation.contains(event.target);
-      const isInsideButton = this.#drawerButton.contains(event.target);
+      const isTargetInsideDrawer = this.#drawerNavigation.contains(event.target);
+      const isTargetInsideButton = this.#drawerButton.contains(event.target);
 
-      if (!(isInsideDrawer || isInsideButton)) {
+      if (!(isTargetInsideDrawer || isTargetInsideButton)) {
         this.#drawerNavigation.classList.remove('open');
       }
 

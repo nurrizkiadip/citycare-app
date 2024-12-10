@@ -2,7 +2,6 @@ import {
   generateCommentsListEmptyTemplate,
   generateCommentsListErrorTemplate,
   generateLoaderAbsoluteTemplate,
-  generateNotifyMeButtonTemplate,
   generateRemoveReportButtonTemplate,
   generateReportCommentItemTemplate,
   generateReportDetailErrorTemplate,
@@ -79,6 +78,7 @@ export default class ReportDetailPage {
       createdAt: report.createdAt,
     });
 
+    // Carousel images
     createCarousel(document.getElementById('images'));
 
     // Map
@@ -98,7 +98,7 @@ export default class ReportDetailPage {
 
     // Actions buttons
     this.#presenter.showSaveButton();
-    this.renderNotifyMeButton();
+    this.addNotifyMeEventListener();
   }
 
   populateReportDetailError(message) {
@@ -106,10 +106,6 @@ export default class ReportDetailPage {
   }
 
   populateReportDetailComments(message, comments) {
-    if (!Array.isArray(comments)) {
-      throw new Error('comments must be an array');
-    }
-
     if (comments.length <= 0) {
       this.populateCommentsListEmpty();
       return;
@@ -175,11 +171,10 @@ export default class ReportDetailPage {
    * TODO: Setelah berhasil, komentar baru belum langsung tampil karena StaleWhileRevalidate. Harus direfresh untuk menampilkan yang terbaru.
    */
   postNewCommentSuccessfully(message) {
-    alert(message);
-    console.log('Success storing new comment');
+    console.log(message);
 
-    this.clearForm();
     this.#presenter.getCommentsList();
+    this.clearForm();
   }
 
   postNewCommentFailed(message) {
@@ -210,17 +205,13 @@ export default class ReportDetailPage {
     });
   }
 
-  renderNotifyMeButton() {
-    document.getElementById('notify-me-actions-container').innerHTML =
-      generateNotifyMeButtonTemplate();
-
+  addNotifyMeEventListener() {
     document.getElementById('report-detail-notify-me').addEventListener('click', () => {
       this.#presenter.notifyMe();
     });
   }
 
   saveToBookmarkSuccessfully(message) {
-    alert(message);
     console.log(message);
   }
 
@@ -229,7 +220,6 @@ export default class ReportDetailPage {
   }
 
   removeFromBookmarkSuccessfully(message) {
-    alert(message);
     console.log(message);
   }
 
